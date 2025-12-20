@@ -1,0 +1,43 @@
+<h2>🏟️ Event → Registered Students</h2>
+
+<form method="get">
+    <input
+        type="text"
+        name="q"
+        value="{{ query }}"
+        placeholder="Search by name or register number"
+    >
+    <button type="submit">Search</button>
+</form>
+
+<hr>
+
+{% for item in events %}
+    <div style="margin-bottom: 35px;">
+        <h3>{{ item.event.name }}</h3>
+
+        {% if item.registrations %}
+            <table border="1" cellpadding="6" cellspacing="0" width="100%">
+                <tr style="background:#f0f0f0;">
+                    <th>Name</th>
+                    <th>Register No</th>
+                    <th>Department</th>
+                    <th>Email</th>
+                </tr>
+
+                {% for reg in item.registrations %}
+                <tr>
+                    <td>{{ reg.participant.full_name }}</td>
+                    <td>{{ reg.participant.register_number }}</td>
+                    <td>{{ reg.participant.department.name }}</td>
+                    <td>{{ reg.participant.email }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p style="color: gray;">No students registered</p>
+        {% endif %}
+    </div>
+{% empty %}
+    <p>No matching registrations found</p>
+{% endfor %}

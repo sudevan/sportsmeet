@@ -119,3 +119,29 @@ class UserAdmin(RoleAdminPermissionMixin, DjangoUserAdmin):
         if role == UserRole.ADMIN:
             return ()
         return ("email", "role", "department", "is_active", "is_staff", "is_superuser", "groups", "user_permissions")
+    
+    
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+
+        # Auto-assign coordinators to department
+        if obj.role == UserRole.FACULTY_COORDINATOR and obj.department:
+            Department.objects.filter(
+                faculty_coordinator=obj
+            ).exclude(
+                id=obj.department.id
+            ).update(faculty_coordinator=None)
+
+            obj.department.faculty_coordinator = obj
+            obj.department.save()
+
+        elif obj.role == UserRole.STUDENT_COORDINATOR and obj.department:
+            Department.objects.filter(
+                student_coordinator=obj
+            ).exclude(
+                id=obj.department.id
+            ).update(student_coordinator=None)
+
+            obj.department.student_coordinator = obj
+            obj.department.save()
+

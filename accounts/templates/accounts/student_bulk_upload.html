@@ -1,0 +1,10 @@
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Upload CSV</button>
+</form>
+
+<p>CSV Format</p>
+<pre>
+full_name,register_number,email,department
+</pre>

@@ -68,6 +68,13 @@ class Department(models.Model):
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
+    full_name = models.CharField(max_length=255, blank=True)
+    register_number = models.CharField(
+        max_length=50,
+        unique=True,
+        null=True,
+        blank=True
+    )
     role = models.CharField(max_length=32, choices=UserRole.choices, default=UserRole.STUDENT)
     department = models.ForeignKey(
         Department,
