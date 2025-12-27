@@ -1,0 +1,21 @@
+<h2>Active Events</h2>
+
+<table border="1" cellpadding="6">
+<tr>
+    <th>Event</th>
+    <th>Action</th>
+</tr>
+
+{% for event in events %}
+<tr>
+    <td>{{ event.name }}</td>
+    <td>
+        <a href="{% url 'accounts:add_student_to_event' event.id %}">
+            Add Students
+        </a>
+    </td>
+</tr>
+{% empty %}
+<tr><td colspan="2">No active events</td></tr>
+{% endfor %}
+</table>
