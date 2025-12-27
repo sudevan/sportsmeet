@@ -11,17 +11,17 @@ urlpatterns = [
 ]
 urlpatterns += [
     path(
-        "events/<int:event_id>/add-students/",
+        "events/<int:meet_event_id>/add-students/",
         add_student_to_event,
         name="add_student_to_event",
     ),
     path(
-        "events/<int:event_id>/add-existing/<int:student_id>/",
+        "events/<int:meet_event_id>/add-existing/<int:student_id>/",
         register_existing_student,
         name="register_existing_student",
     ),
     path(
-        "events/<int:event_id>/add-new/",
+        "events/<int:meet_event_id>/add-new/",
         add_new_student_and_register,
         name="add_new_student_and_register",
     ),
@@ -47,7 +47,7 @@ urlpatterns += [
          student_dashboard,
          name= "student_dashboard"
     ),
-    path("student/register/<int:event_id>",
+    path("student/register/<int:meet_event_id>/",
         student_event_register,
         name="student_event_register"   
     ),

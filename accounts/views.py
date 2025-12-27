@@ -165,11 +165,12 @@ def student_list(request):
 
 
 @login_required
-def add_student_to_event(request, event_id):
+def add_student_to_event(request, meet_event_id):
     if not is_admin_or_coordinator(request.user):
         return HttpResponseForbidden("Not allowed")
 
-    event = get_object_or_404(Event, id=event_id)
+    meet_event = get_object_or_404(MeetEvent, id=meet_event_id)
+    event = meet_event.event
     query = request.GET.get("q", "")
     students = []
     
@@ -192,6 +193,7 @@ def add_student_to_event(request, event_id):
         request,
         "accounts/add_student_to_event.html",
         {
+            "meet_event": meet_event,
             "event": event,
             "students": students,
             "query": query,
@@ -200,12 +202,13 @@ def add_student_to_event(request, event_id):
     )
 
 @login_required
-def register_existing_student(request, event_id, student_id):
+def register_existing_student(request, meet_event_id, student_id):
     if not is_admin_or_coordinator(request.user):
         return HttpResponseForbidden("Not allowed")
     
 
-    event = get_object_or_404(Event, id=event_id)
+    meet_event = get_object_or_404(MeetEvent, id=meet_event_id)
+    event = meet_event.event
 
     if event.status != "ACTIVE":
         return HttpResponseForbidden("Event is not active")
@@ -221,25 +224,25 @@ def register_existing_student(request, event_id, student_id):
         
 
     Registration.objects.get_or_create(
-        event=event,
+        meet_event=meet_event,
         participant=student,
-        defaults={"registered_by": request.user},
     )
 
-    return redirect("accounts:add_student_to_event", event_id=event.id)
+    return redirect("accounts:add_student_to_event", meet_event_id=meet_event.id)
 
 
 
 
 @login_required
-def add_new_student_and_register(request, event_id):
+def add_new_student_and_register(request, meet_event_id):
     if not is_admin_or_coordinator(request.user):
         return HttpResponseForbidden("Not allowed")
 
     if request.method != "POST":
         return HttpResponseForbidden("Invalid request")
 
-    event = get_object_or_404(Event, id=event_id)
+    meet_event = get_object_or_404(MeetEvent, id=meet_event_id)
+    event = meet_event.event
 
     if event.status != "ACTIVE":
         return HttpResponseForbidden("Event is not active")
@@ -258,12 +261,11 @@ def add_new_student_and_register(request, event_id):
         student.save()
         
         Registration.objects.get_or_create(
-            event=event,
+            meet_event=meet_event,
             participant=student,
-            defaults={"registered_by": request.user},
         )
 
-    return redirect("accounts:add_student_to_event", event_id=event.id)
+    return redirect("accounts:add_student_to_event", meet_event_id=meet_event.id)
 
 
 
@@ -273,9 +275,10 @@ def coordinator_events(request):
     if not is_admin_or_coordinator(request.user):
         return HttpResponseForbidden("Not Allowed")
     
-    events = Event.objects.filter(status="ACTIVE")
+    # Show active meet events
+    meet_events = MeetEvent.objects.filter(meet__status=MeetStatus.ACTIVE, is_active=True).select_related('event', 'meet')
     
-    return render(request, "accounts/coordinator_events.html", {"events": events})
+    return render(request, "accounts/coordinator_events.html", {"meet_events": meet_events})
 
 
 
@@ -286,16 +289,16 @@ def event_student_report(request):
 
     query = request.GET.get("q", "").lower()
 
-    events = Event.objects.filter(
-        status="ACTIVE"
-    ).prefetch_related(
+    meet_events = MeetEvent.objects.filter(
+        meet__status=MeetStatus.ACTIVE
+    ).select_related('event', 'meet').prefetch_related(
         "registrations__participant"
     )
 
     result = []
 
-    for event in events:
-        regs = event.registrations.all()
+    for me in meet_events:
+        regs = me.registrations.all()
 
         if query:
             regs = [
@@ -307,7 +310,8 @@ def event_student_report(request):
 
         if regs:
             result.append({
-                "event": event,
+                "meet_event": me,
+                "event": me.event,
                 "registrations": regs,
             })
 
@@ -324,25 +328,25 @@ def event_student_report(request):
 
 
 @login_required
-def student_event_register(request, event_id):
+def student_event_register(request, meet_event_id):
     if request.user.role != UserRole.STUDENT:
         return HttpResponseForbidden("Access Denied")
 
-    event = get_object_or_404(Event, id=event_id)
+    meet_event = get_object_or_404(MeetEvent, id=meet_event_id)
+    event = meet_event.event
 
     if event.status != "ACTIVE":
         return HttpResponseForbidden("Event is not active")
 
-    if request.user.gender == "MALE" and event.gender != "BOYS":
+    if request.user.gender == "MALE" and not event.gender_boys:
         return HttpResponseForbidden("Not allowed")
 
-    if request.user.gender == "FEMALE" and event.gender != "GIRLS":
+    if request.user.gender == "FEMALE" and not event.gender_girls:
         return HttpResponseForbidden("Not allowed")
 
     Registration.objects.get_or_create(
-        event=event,
+        meet_event=meet_event,
         participant=request.user,
-        defaults={"registered_by": request.user},
     )
 
     return redirect("accounts:student_dashboard")
@@ -364,7 +368,7 @@ def faculty_coordinator_dashboard(request):
 
     return render(
         request,
-        "accounts/dashboards/faculty_dashboard.html",
+        "accounts/dashboards/faculty_coordinator_dashboard.html",
         {
             "meets": meets,
         }
@@ -395,11 +399,15 @@ def student_dashboard(request):
     registered_event_ids = registrations.values_list("event_id", flat=True)
     
     if request.user.gender == "MALE":
-        allowed_gender = "BOYS"
+        q_gender = Q(event__gender_boys=True)
     else:
-        allowed_gender = "GIRLS"
+        q_gender = Q(event__gender_girls=True)
         
-    available_events = Event.objects.filter(meet__status="ACTIVE", status="ACTIVE", gender=allowed_gender).exclude(id__in=registered_event_ids).select_related("meet")
+    available_events = MeetEvent.objects.filter(
+        meet__status=MeetStatus.ACTIVE, 
+        is_active=True,
+        event__status=EventStatus.ACTIVE
+    ).filter(q_gender).exclude(id__in=registered_event_ids).select_related("meet", "event")
     
     
     return render(request, "accounts/dashboards/student_dashboard.html", {

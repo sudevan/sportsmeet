@@ -1,34 +1,37 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Student Dashboard</title>
-    </head>
-    <body>
-        <h2>Welcome, {{ student.full_name }}</h2>
-        <hr>
 
-        <h3>📌 Registered Events</h3>
-        <ul>
-            {% for reg in registrations %}
-                <li>
-                    {{ reg.event.name }} ({{ reg.event.meet.name }})
-                </li>
-            {% empty %}
-                <li>No registrations yet</li>
-            {% endfor %}
-        </ul>
-        <hr>
+<head>
+    <title>Student Dashboard</title>
+</head>
 
-        <h3>🆕 Available Events</h3>
-        <ul>
-            {% for event in available_events %}
-                <li>
-                    {{ event.name }} ({{ event.meet.name }})
-                    <a href="{% url 'accounts:student_event_register' event.id %}">Register</a>
-                </li> 
-            {% empty %}
-                <li>No available events</li>
-            {% endfor %}
-        </ul>
-    </body>
+<body>
+    <h2>Welcome, {{ student.full_name }}</h2>
+    <hr>
+
+    <h3>📌 Registered Events</h3>
+    <ul>
+        {% for reg in registrations %}
+        <li>
+            {{ reg.meet_event.event.name }} ({{ reg.meet_event.meet.name }})
+        </li>
+        {% empty %}
+        <li>No registrations yet</li>
+        {% endfor %}
+    </ul>
+    <hr>
+
+    <h3>🆕 Available Events</h3>
+    <ul>
+        {% for me in available_events %}
+        <li>
+            {{ me.event.name }} ({{ me.meet.name }})
+            <a href="{% url 'accounts:student_event_register' me.id %}">Register</a>
+        </li>
+        {% empty %}
+        <li>No available events</li>
+        {% endfor %}
+    </ul>
+</body>
+
 </html>

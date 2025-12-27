@@ -10,31 +10,33 @@
 </form>
 
 <table border="1">
-<tr>
-    <th>Name</th>
-    <th>Register No</th>
-    <th>Action</th>
-</tr>
-{% for s in students %}
-<tr>
-    <td>{{ s.full_name }}</td>
-    <td>{{ s.register_number }}</td>
-    <td>
-        <a href="{% url 'accounts:register_existing_student' event.id s.id %}">
-            Add to Event
-        </a>
-    </td>
-</tr>
-{% empty %}
-<tr><td colspan="3">No students found</td></tr>
-{% endfor %}
+    <tr>
+        <th>Name</th>
+        <th>Register No</th>
+        <th>Action</th>
+    </tr>
+    {% for s in students %}
+    <tr>
+        <td>{{ s.full_name }}</td>
+        <td>{{ s.register_number }}</td>
+        <td>
+            <a href="{% url 'accounts:register_existing_student' meet_event.id s.id %}">
+                Add to Event
+            </a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="3">No students found</td>
+    </tr>
+    {% endfor %}
 </table>
 
 <hr>
 
 <h3>Option 2: Add New Student</h3>
 
-<form method="post" action="{% url 'accounts:add_new_student_and_register' event.id %}">
+<form method="post" action="{% url 'accounts:add_new_student_and_register' meet_event.id %}">
     {% csrf_token %}
     {{ manual_form.as_p }}
     <button type="submit">Add & Register</button>

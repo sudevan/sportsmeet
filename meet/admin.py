@@ -2,17 +2,12 @@ from django.contrib import admin
 
 from accounts.admin import RoleAdminPermissionMixin
 from accounts.admin_site import admin_site
-from meet.models import Event, Meet, Registration
+from meet.models import Event, Meet, MeetEvent, Registration
 
 
-# class CategoryInline(admin.TabularInline):
-#     model = Category
-#     extra = 0
-
-
-class EventInline(admin.TabularInline):
-    model = Event
-    extra = 0
+class MeetEventInline(admin.TabularInline):
+    model = MeetEvent
+    extra = 1
 
 
 @admin.register(Meet, site=admin_site)
@@ -22,17 +17,14 @@ class MeetAdmin(RoleAdminPermissionMixin, admin.ModelAdmin):
     list_display = ("name", "start_date", "end_date", "status")
     list_filter = ("status", "start_date", "end_date")
     search_fields = ("name",)
-    # inlines = (CategoryInline,)
+    inlines = (MeetEventInline,)
 
 
-# @admin.register(Category, site=admin_site)
-# class CategoryAdmin(RoleAdminPermissionMixin, admin.ModelAdmin):
-#     model_key = "category"
-
-#     list_display = ("name", "meet")
-#     list_filter = ("meet",)
-#     search_fields = ("name", "meet__name")
-#     inlines = (EventInline,)
+@admin.register(MeetEvent, site=admin_site)
+class MeetEventAdmin(RoleAdminPermissionMixin, admin.ModelAdmin):
+    model_key = "meet_event"
+    list_display = ("meet", "event", "is_active")
+    list_filter = ("meet", "event", "is_active")
 
 
 @admin.register(Event, site=admin_site)
@@ -43,8 +35,5 @@ class EventAdmin(RoleAdminPermissionMixin, admin.ModelAdmin):
     list_filter = ("status", "event_type")
     search_fields = ("name", "event_type")
     
-    # list_display = ("name", "category", "event_type", "status")
-    # list_filter = ("status", "event_type", "category__meet")
-    # search_fields = ("name", "category__name", "category__meet__name")
 
 admin.site.register(Registration)

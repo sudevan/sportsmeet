@@ -28,7 +28,7 @@ class RoleAdminPermissionMixin:
         if role == UserRole.FACULTY_COORDINATOR:
             return True
         if role == UserRole.STUDENT_COORDINATOR:
-            return self.model_key in {"meet", "category", "event"}
+            return self.model_key in {"meet", "category", "event", "meet_event"}
         return False
 
     def has_add_permission(self, request):
@@ -36,7 +36,7 @@ class RoleAdminPermissionMixin:
         if role == UserRole.ADMIN:
             return True
         if role == UserRole.FACULTY_COORDINATOR:
-            return self.model_key in {"meet", "category", "event"}
+            return self.model_key in {"meet", "category", "event", "meet_event"}
         return False
 
     def has_change_permission(self, request, obj=None):
@@ -44,7 +44,7 @@ class RoleAdminPermissionMixin:
         if role == UserRole.ADMIN:
             return True
         if role == UserRole.FACULTY_COORDINATOR:
-            return self.model_key in {"meet", "category", "event"}
+            return self.model_key in {"meet", "category", "event", "meet_event"}
         return False
 
     def has_delete_permission(self, request, obj=None):
@@ -52,7 +52,7 @@ class RoleAdminPermissionMixin:
         if role == UserRole.ADMIN:
             return True
         if role == UserRole.FACULTY_COORDINATOR:
-            return self.model_key in {"meet", "category", "event"}
+            return self.model_key in {"meet", "category", "event", "meet_event"}
         return False
 
 

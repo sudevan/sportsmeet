@@ -57,7 +57,8 @@ class Event(models.Model):
 
     category = models.CharField(
         max_length=20,
-        choices=EventCategory.choices
+        choices=EventCategory.choices,
+        default=EventCategory.OTHER
     )
 
     event_type = models.CharField(

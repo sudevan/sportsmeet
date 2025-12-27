@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Faculty Coordinator Dashboard</title>
     <style>
@@ -7,6 +8,7 @@
             font-family: Arial, sans-serif;
             background: #f4f6f8;
         }
+
         .container {
             width: 700px;
             margin: 50px auto;
@@ -14,12 +16,15 @@
             padding: 30px;
             border-radius: 8px;
         }
+
         h2 {
             text-align: center;
         }
+
         .section {
             margin-top: 30px;
         }
+
         .btn {
             display: block;
             padding: 12px;
@@ -30,56 +35,73 @@
             text-align: center;
             border-radius: 5px;
         }
+
         .btn:hover {
             background: #084298;
         }
+
         .muted {
             color: #666;
             font-size: 14px;
         }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <h2>👨‍🏫 Faculty Coordinator Dashboard</h2>
-    <p class="muted">
-        Department: <strong>{{ department.name }}</strong>
-    </p>
-
-    <div class="section">
-        <h3>👥 Student Management</h3>
-        <a class="btn" href="{% url 'accounts:student_list' %}">
-            View Department Students
-        </a>
-        <a class="btn" href="{% url 'accounts:student_search' %}">
-            Search Students
-        </a>
-        <a class="btn" href="{% url 'accounts:student_bulk_upload' %}">
-            Upload Students (CSV)
-        </a>
-    </div>
-
-    <div class="section">
-        <h3>🎓 Student Coordinator</h3>
+    <div class="container">
+        <h2>👨‍🏫 Faculty Coordinator Dashboard</h2>
         <p class="muted">
-            Assign or update the Student Coordinator for your department
+            Department: <strong>{{ department.name }}</strong>
         </p>
-        <a class="btn" href="/admin/accounts/user/">
-            Manage Student Coordinator
-        </a>
-    </div>
 
-    <div class="section">
-        <h3>🏟️ Event Management</h3>
-        <a class="btn" href="{% url 'accounts:coordinator_events' %}">
-            Add Students to Events
-        </a>
-        <a class="btn" href="{% url 'accounts:event_student_report' %}">
-            View Event Registrations
-        </a>
+        <div class="section">
+            <h3>👥 Student Management</h3>
+            <a class="btn" href="{% url 'accounts:student_list' %}">
+                View Department Students
+            </a>
+            <a class="btn" href="{% url 'accounts:student_search' %}">
+                Search Students
+            </a>
+            <a class="btn" href="{% url 'accounts:student_bulk_upload' %}">
+                Upload Students (CSV)
+            </a>
+        </div>
+
+        <div class="section">
+            <h3>🎓 Student Coordinator</h3>
+            <p class="muted">
+                Assign or update the Student Coordinator for your department
+            </p>
+            <a class="btn" href="/admin/accounts/user/">
+                Manage Student Coordinator
+            </a>
+        </div>
+
+        <div class="section">
+            <h3>🏆 Active Meets</h3>
+            <ul>
+                {% for meet in meets %}
+                <li>
+                    <strong>{{ meet.name }}</strong> ({{ meet.start_date }} - {{ meet.end_date }})
+                </li>
+                {% empty %}
+                <li>No active meets</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>🏟️ Event Management</h3>
+            <a class="btn" href="{% url 'accounts:coordinator_events' %}">
+                Add Students to Events
+            </a>
+            <a class="btn" href="{% url 'accounts:event_student_report' %}">
+                View Event Registrations
+            </a>
+        </div>
     </div>
-</div>
 
 </body>
+
 </html>
