@@ -37,6 +37,11 @@ class Meet(models.Model):
         default=MeetStatus.DRAFT
     )
 
+    @property
+    def events(self):
+        return Event.objects.filter(meetevent__meet=self)
+    
+    
     def __str__(self):
         return self.name
 
@@ -94,13 +99,21 @@ class Event(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return self.name
+
+
     
 
 
 
 
 class MeetEvent(models.Model):
-    meet = models.ForeignKey(Meet, on_delete=models.CASCADE, related_name="meet_events")
+    meet = models.ForeignKey(
+        Meet,
+        on_delete=models.CASCADE,
+        related_name="meet_events"
+    )
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
 
@@ -108,7 +121,8 @@ class MeetEvent(models.Model):
         unique_together = ("meet", "event")
 
     def __str__(self):
-        return f"{self.meet} → {self.event}"
+        return f"{self.meet.name} → {self.event.name}"
+
 
 
 
@@ -146,6 +160,7 @@ class Team(models.Model):
         if event.event_type != EventType.TEAM:
             raise ValidationError("Teams can only be created for TEAM events")
 
+        # ⚠️ M2M count only valid after assignment
         member_count = self.members.count()
 
         if member_count < event.min_team_size:
@@ -158,12 +173,9 @@ class Team(models.Model):
                 f"Maximum {event.max_team_size} players allowed"
             )
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.full_clean()
-
     def __str__(self):
         return f"{self.name} ({self.meet_event})"
+
 
 
 

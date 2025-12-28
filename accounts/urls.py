@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import home, student_bulk_upload, student_search, student_list,add_student_to_event, register_existing_student,  add_new_student_and_register, coordinator_events, event_student_report, faculty_coordinator_dashboard, student_coordinator_dashboard, login_view, logout_view, student_dashboard, student_event_register, faculty_dashboard
+from .views import home, student_bulk_upload, student_search, student_list,add_student_to_event, register_existing_student,  add_new_student_and_register, coordinator_events, event_student_report, faculty_coordinator_dashboard, student_coordinator_dashboard, login_view, logout_view, student_dashboard, student_event_register, faculty_dashboard, admin_meet_event_assign, faculty_assign_events_to_meet, admin_dashboard, admin_create_meet, admin_create_event
 
 app_name = "accounts"
 
@@ -56,4 +56,21 @@ urlpatterns += [
         student_event_register,
         name="student_event_register"   
     ),
+    path(
+        "admin/meet/<int:meet_id>/assign-events/",
+        admin_meet_event_assign,
+        name="admin_meet_event_assign"
+    ),
+    path(
+        "faculty_coordinator/assign-meets-to-events/<int:meet_id>",
+        faculty_assign_events_to_meet,
+        name = "faculty_assign_events_to_meet"
+    ),
+    path(
+        "admin-dashboard/",
+        admin_dashboard,
+        name="admin_dashboard"
+    ),
+    path("admin/create-meet/", admin_create_meet, name="admin_create_meet"),
+    path("admin/create-event/", admin_create_event, name="admin_create_event"),
 ]

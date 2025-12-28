@@ -3,87 +3,50 @@
 {% block title %}Faculty Coordinator Dashboard | Sports Meet{% endblock %}
 
 {% block page_title %}👨‍🏫 Faculty Coordinator Dashboard{% endblock %}
-{% block page_subtitle %}Manage your department's students, coordinators, and event participations.{% endblock %}
-
-{% block nav_items %}
-<li class="nav-item">
-    <a href="{% url 'accounts:student_list' %}" class="nav-link">
-        <span>👥 Students</span>
-    </a>
-</li>
-<li class="nav-item">
-    <a href="{% url 'accounts:student_bulk_upload' %}" class="nav-link">
-        <span>📤 Bulk Upload</span>
-    </a>
-</li>
-<li class="nav-item">
-    <a href="{% url 'accounts:coordinator_events' %}" class="nav-link">
-        <span>🏟️ Events</span>
-    </a>
-</li>
-<li class="nav-item">
-    <a href="{% url 'accounts:event_student_report' %}" class="nav-link">
-        <span>📋 Reports</span>
-    </a>
-</li>
+{% block page_subtitle %}
+Manage department students and assign events to active meets
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-grid">
-    <!-- Student Management -->
-    <div class="glass-card">
-        <div class="card-header">
-            <h3 class="card-title">Student Management</h3>
-            <span>👥</span>
-        </div>
-        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Department: <strong>{{ department.name }}</strong>
-        </p>
-        <a href="{% url 'accounts:student_list' %}" class="btn-action">View Department Students</a>
-        <a href="{% url 'accounts:student_search' %}" class="btn-action btn-outline">Search Students</a>
-        <a href="{% url 'accounts:student_bulk_upload' %}" class="btn-action btn-outline">Upload Students (CSV)</a>
-    </div>
-
-    <!-- Student Coordinator -->
-    <div class="glass-card">
-        <div class="card-header">
-            <h3 class="card-title">Student Coordinator</h3>
-            <span>🎓</span>
-        </div>
-        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Assign or update the Student Coordinator for your
-            department.</p>
-        <a href="/admin/accounts/user/" class="btn-action">Manage Coordinator</a>
-    </div>
-
-    <!-- Event Management -->
-    <div class="glass-card">
-        <div class="card-header">
-            <h3 class="card-title">Event Management</h3>
-            <span>🏟️</span>
-        </div>
-        <a href="{% url 'accounts:coordinator_events' %}" class="btn-action">Add Students to Events</a>
-        <a href="{% url 'accounts:event_student_report' %}" class="btn-action btn-outline">View Registrations</a>
-    </div>
 
     <!-- Active Meets -->
     <div class="glass-card" style="grid-column: span 2;">
         <div class="card-header">
-            <h3 class="card-title">Active Meets</h3>
-            <span>🏆</span>
+            <h3 class="card-title">🏆 Active Meets</h3>
         </div>
+
         <ul class="list">
             {% for meet in meets %}
-            <li class="list-item">
-                <div>
-                    <strong>{{ meet.name }}</strong>
-                    <p style="font-size: 0.8rem; color: var(--text-secondary);">{{ meet.start_date }} - {{ meet.end_date
-                        }}</p>
+            <li class="list-item" style="flex-direction: column; align-items: flex-start;">
+                <div style="width:100%; display:flex; justify-content:space-between;">
+                    <div>
+                        <strong>{{ meet.name }}</strong>
+                        <p style="font-size:0.85rem; color:var(--text-secondary);">
+                            {{ meet.start_date }} – {{ meet.end_date }}
+                        </p>
+                    </div>
+                    <span class="role-badge">{{ meet.status }}</span>
                 </div>
-                <span class="role-badge">{{ meet.status }}</span>
+
+                <!-- Actions -->
+                <div style="margin-top:10px;">
+                    <a href="{% url 'accounts:faculty_assign_events_to_meet' meet.id %}"
+                       class="btn-action btn-outline">
+                        ➕ Assign Events
+                    </a>
+
+                    <a href="{% url 'accounts:coordinator_events' %}?meet={{ meet.id }}"
+                       class="btn-action">
+                        👁 View Assigned Events
+                    </a>
+                </div>
             </li>
             {% empty %}
-            <li class="list-item">No active meets</li>
+            <li class="list-item">No active meets available</li>
             {% endfor %}
         </ul>
     </div>
+
 </div>
 {% endblock %}

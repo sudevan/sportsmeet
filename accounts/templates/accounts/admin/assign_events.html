@@ -2,15 +2,17 @@
 
 {% block title %}Assign Events | {{ meet.name }}{% endblock %}
 
-{% block page_title %}Assign Events{% endblock %}
+{% block page_title %}➕ Assign Events{% endblock %}
 {% block page_subtitle %}Meet: {{ meet.name }}{% endblock %}
 
 {% block content %}
 <div class="glass-card" style="max-width:700px; margin:auto;">
+
     <form method="post">
         {% csrf_token %}
 
-        <h3>Select Events</h3>
+        <h3>Available Events</h3>
+
         <ul class="list">
             {% for event in events %}
             <li class="list-item">
@@ -18,25 +20,26 @@
                     <input type="checkbox"
                            name="events"
                            value="{{ event.id }}"
-                           {% if event.id in assigned_event_ids %}checked{% endif %}
-                    >
+                           {% if event.id in assigned_event_ids %}checked{% endif %}>
                     {{ event.name }} ({{ event.category }})
                 </label>
             </li>
             {% empty %}
-            <li class="list-item">No active events</li>
+            <li class="list-item">No active events available</li>
             {% endfor %}
         </ul>
 
         <div style="margin-top:1rem;">
             <button type="submit" class="btn-action">
-                ✅ Add Selected Events
+                ✅ Save Assignments
             </button>
-            <a href="{% url 'accounts:faculty_coordinator_dashboard' %}"
+
+            <a href="{% url 'accounts:admin_dashboard' %}"
                class="btn-action btn-outline">
                 ⬅ Back
             </a>
         </div>
     </form>
+
 </div>
 {% endblock %}

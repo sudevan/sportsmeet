@@ -1,0 +1,30 @@
+{% extends 'accounts/dashboards/base_dashboard.html' %}
+
+{% block page_title %}➕ Create Meet{% endblock %}
+
+{% block content %}
+<div class="glass-card" style="max-width:600px; margin:auto;">
+    <form method="post">
+        {% csrf_token %}
+
+        <label>Meet Name</label>
+        <input type="text" name="name" required>
+
+        <label>Start Date</label>
+        <input type="date" name="start_date" required>
+
+        <label>End Date</label>
+        <input type="date" name="end_date" required>
+
+        <label>Status</label>
+        <select name="status">
+            <option value="DRAFT">Draft</option>
+            <option value="ACTIVE">Active</option>
+            <option value="COMPLETED">Completed</option>
+        </select>
+
+        <button type="submit" class="btn-action">Create Meet</button>
+        <a href="{% url 'accounts:admin_dashboard' %}" class="btn-action btn-outline">Back</a>
+    </form>
+</div>
+{% endblock %}

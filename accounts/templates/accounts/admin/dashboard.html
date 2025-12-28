@@ -1,0 +1,69 @@
+{% extends 'accounts/dashboards/base_dashboard.html' %}
+
+{% block title %}Admin Dashboard | Sports Meet{% endblock %}
+
+{% block page_title %}🛠 Admin Dashboard{% endblock %}
+{% block page_subtitle %}Manage meets, events, and assignments{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+
+    <!-- ADMIN QUICK ACTIONS -->
+    <div class="glass-card">
+        <div class="card-header">
+            <h3 class="card-title">⚡ Admin Actions</h3>
+        </div>
+
+        <!-- Custom UI (future-ready) -->
+        <a href="{% url 'accounts:admin_create_meet' %}" class="btn-action">
+            ➕ Create Meet
+        </a>
+
+        <a href="{% url 'accounts:admin_create_event' %}" class="btn-action btn-outline">
+            ➕ Create Event
+        </a>
+
+        <!-- Django Admin (safe fallback) -->
+        <a href="/django-admin/meet/meet/" class="btn-action btn-outline">
+            🗂 Manage Meets (Admin)
+        </a>
+
+        <a href="/django-admin/meet/event/" class="btn-action btn-outline">
+            🗂 Manage Events (Admin)
+        </a>
+    </div>
+
+    <!-- MEETS LIST -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header">
+            <h3 class="card-title">🏆 All Meets</h3>
+        </div>
+
+        <ul class="list">
+            {% for meet in meets %}
+            <li class="list-item" style="flex-direction: column; align-items: flex-start;">
+                <div style="width:100%; display:flex; justify-content:space-between;">
+                    <div>
+                        <strong>{{ meet.name }}</strong>
+                        <p style="font-size:0.85rem; color:var(--text-secondary);">
+                            {{ meet.start_date }} – {{ meet.end_date }}
+                        </p>
+                    </div>
+                    <span class="role-badge">{{ meet.status }}</span>
+                </div>
+
+                <div style="margin-top:10px;">
+                    <a href="{% url 'accounts:admin_meet_event_assign' meet.id %}"
+                       class="btn-action">
+                        ➕ Assign Events
+                    </a>
+                </div>
+            </li>
+            {% empty %}
+            <li class="list-item">No meets created</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+{% endblock %}

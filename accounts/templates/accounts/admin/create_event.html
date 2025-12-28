@@ -1,0 +1,43 @@
+{% extends 'accounts/dashboards/base_dashboard.html' %}
+
+{% block page_title %}➕ Create Event{% endblock %}
+
+{% block content %}
+<div class="glass-card" style="max-width:600px; margin:auto;">
+    <form method="post">
+        {% csrf_token %}
+
+        <label>Event Name</label>
+        <input type="text" name="name" required>
+
+        <label>Category</label>
+        <select name="category">
+            <option value="TRACK">Track</option>
+            <option value="FIELD">Field</option>
+            <option value="OTHER">Other</option>
+        </select>
+
+        <label>Event Type</label>
+        <select name="event_type">
+            <option value="INDIVIDUAL">Individual</option>
+            <option value="TEAM">Team</option>
+        </select>
+
+        <label>
+            <input type="checkbox" name="gender_boys"> Boys
+        </label>
+        <label>
+            <input type="checkbox" name="gender_girls"> Girls
+        </label>
+
+        <label>Status</label>
+        <select name="status">
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+        </select>
+
+        <button type="submit" class="btn-action">Create Event</button>
+        <a href="{% url 'accounts:admin_dashboard' %}" class="btn-action btn-outline">Back</a>
+    </form>
+</div>
+{% endblock %}

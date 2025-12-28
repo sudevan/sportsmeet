@@ -364,7 +364,7 @@ def faculty_coordinator_dashboard(request):
     if request.user.role != UserRole.FACULTY_COORDINATOR:
         return HttpResponseForbidden("Access denied")
 
-    meets = Meet.objects.all().order_by("-id")
+    meets = Meet.objects.filter(status=MeetStatus.ACTIVE).order_by("-id")
     department = request.user.department
 
     return render(
@@ -445,13 +445,40 @@ def student_dashboard(request):
         }
     )
     
+    
+    
+@login_required
+def admin_dashboard(request):
+    if request.user.role != UserRole.ADMIN:
+        return HttpResponseForbidden("Access denied")
+
+    meets = Meet.objects.all().order_by("-id")
+
+    return render(
+        request,
+        "accounts/admin/dashboard.html",
+        {
+            "meets": meets
+        }
+    )
+    
+
+
 
 
 @login_required
 def admin_meet_event_assign(request, meet_id):
+    if request.user.role != UserRole.ADMIN:
+        return HttpResponseForbidden("Access Denied!!!")
+
     meet = get_object_or_404(Meet, id=meet_id)
 
     events = Event.objects.filter(status="ACTIVE")
+
+    # ✅ fetch already assigned events
+    assigned_event_ids = MeetEvent.objects.filter(
+        meet=meet
+    ).values_list("event_id", flat=True)
 
     if request.method == "POST":
         selected_event_ids = request.POST.getlist("events")
@@ -462,12 +489,60 @@ def admin_meet_event_assign(request, meet_id):
                 event_id=event_id
             )
 
-        return redirect("admin_meet_dashboard")
+        return redirect("accounts:admin_dashboard")
 
-    return render(request, "admin/assign_events.html", {
-        "meet": meet,
-        "events": events
-    })
+    return render(
+        request,
+        "accounts/admin/assign_events.html",
+        {
+            "meet": meet,
+            "events": events,
+            "assigned_event_ids": assigned_event_ids,  # ✅ added
+        }
+    )
+
+
+
+
+
+@login_required
+def admin_create_meet(request):
+    if request.user.role != UserRole.ADMIN:
+        return HttpResponseForbidden("Access Denied!!!")
+    
+    if request.method == "POST":
+        Meet.objects.create(
+            name = request.POST["name"],
+            start_date = request.POST["start_date"],
+            end_date = request.POST["end_date"],
+            status = request.POST["status"]
+        )
+        return redirect("accounts:admin_dashboard")
+    
+    return render(request, "accounts/admin/create_meet.html")
+
+
+
+
+
+@login_required
+def admin_create_event(request):
+    if request.user.role != UserRole.ADMIN:
+        return HttpResponseForbidden("Access denied")
+
+    if request.method == "POST":
+        Event.objects.create(
+            name=request.POST["name"],
+            category=request.POST["category"],
+            event_type=request.POST["event_type"],
+            gender_boys=bool(request.POST.get("gender_boys")),
+            gender_girls=bool(request.POST.get("gender_girls")),
+            status=request.POST["status"]
+        )
+        return redirect("accounts:admin_dashboard")
+
+    return render(request, "accounts/admin/create_event.html")
+
 
 
 
@@ -498,7 +573,7 @@ def faculty_assign_events_to_meet(request, meet_id):
 
     return render(
         request,
-        "accounts/faculty/assign_events.html",
+        "accounts/assign_events.html",
         {
             "meet": meet,
             "events": events,
