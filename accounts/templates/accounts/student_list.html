@@ -1,31 +1,58 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Student List</title>
-</head>
-<body>
-    <h2>Student List</h2>
+{% extends 'accounts/dashboards/base_dashboard.html' %}
 
+{% block title %}Student List{% endblock %}
 
-    <table border="1" cellpadding="5">
-        <tr>
-            <th>Name</th>
-            <th>Department</th>
-            <th>Register Number</th>
-            <th>Email</th>
-        </tr>
-        {% for student in students %}
-        <tr>
-            <td>{{ student.full_name }}</td>
-            <td>{{ student.department }}</td>
-            <td>{{ student.register_number }}</td>
-            <td>{{ student.email }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="2">No students found</td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
-</html>
+{% block page_title %}👥 Student List{% endblock %}
+{% block page_subtitle %}
+All students in your department
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+
+    <!-- Student List -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header">
+            <h3 class="card-title">Registered Students</h3>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Register Number</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>{{ student.full_name }}</td>
+                        <td>{{ student.department }}</td>
+                        <td>{{ student.register_number }}</td>
+                        <td>{{ student.email }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align:center; color:var(--text-secondary);">
+                            No students found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Back Button -->
+        <div style="margin-top:1rem;">
+            <a href="{% url 'accounts:faculty_coordinator_dashboard' %}"
+               class="btn-action btn-outline">
+                ⬅ Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

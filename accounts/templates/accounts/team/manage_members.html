@@ -1,0 +1,38 @@
+{% extends "accounts/dashboards/base_dashboard.html" %}
+
+{% block page_title %}{{ team.name }} – Members{% endblock %}
+
+{% block content %}
+<div class="glass-card">
+
+<h3>Add Member</h3>
+<form method="post">
+    {% csrf_token %}
+    <select name="student">
+        {% for s in students %}
+        <option value="{{ s.id }}">{{ s.full_name }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn-action">Add</button>
+</form>
+
+<hr>
+
+<h3>Team Members</h3>
+<ul class="list">
+{% for m in members %}
+<li class="list-item">
+    {{ m.student.full_name }}
+    {% if m.is_captain %}
+        🏅 Captain
+    {% else %}
+        <a href="{% url 'accounts:set_team_captain' team.id m.id %}">
+            Set Captain
+        </a>
+    {% endif %}
+</li>
+{% endfor %}
+</ul>
+
+</div>
+{% endblock %}

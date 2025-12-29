@@ -272,14 +272,53 @@
     <div class="sidebar">
         <div class="logo">SPORTS MEET</div>
         <ul class="nav-links">
+
+            <!-- Home -->
             <li class="nav-item">
                 <a href="{% url 'accounts:home' %}"
-                    class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
                     <span>🏠 Home</span>
                 </a>
             </li>
+
+            <!-- Faculty Coordinator Menu -->
+            {% if request.user.role == "FACULTY_COORDINATOR" %}
+
+                <li class="nav-item">
+                    <a href="{% url 'accounts:student_list' %}" class="nav-link">
+                        <span>👥 View Students</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'accounts:student_bulk_upload' %}" class="nav-link">
+                        <span>📤 Bulk Upload</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'accounts:student_search' %}" class="nav-link">
+                        <span>🔍 Search Students</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'accounts:event_student_report' %}" class="nav-link">
+                        <span>📋 Reports</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="/django-admin/accounts/user/" class="nav-link">
+                        <span>🎓 Student Coordinator</span>
+                    </a>
+                </li>
+
+            {% endif %}
+
             {% block nav_items %}{% endblock %}
         </ul>
+
         <a href="{% url 'accounts:logout' %}" class="nav-link logout-btn">
             <span>🚪 Logout</span>
         </a>
@@ -298,6 +337,7 @@
                 </div>
             </div>
         </div>
+        
 
         {% block content %}{% endblock %}
     </div>

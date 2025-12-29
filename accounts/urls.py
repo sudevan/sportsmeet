@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import home, student_bulk_upload, student_search, student_list,add_student_to_event, register_existing_student,  add_new_student_and_register, coordinator_events, event_student_report, faculty_coordinator_dashboard, student_coordinator_dashboard, login_view, logout_view, student_dashboard, student_event_register, faculty_dashboard, admin_meet_event_assign, faculty_assign_events_to_meet, admin_dashboard, admin_create_meet, admin_create_event
+from .views import home, student_bulk_upload, student_search, student_list,add_student_to_event, register_existing_student,  add_new_student_and_register, coordinator_events, event_student_report, faculty_coordinator_dashboard, student_coordinator_dashboard, login_view, logout_view, student_dashboard, student_event_register, faculty_dashboard, admin_meet_event_assign, faculty_assign_events_to_meet, admin_dashboard, admin_create_meet, admin_create_event, create_team, manage_team_members, set_team_captain
 
 app_name = "accounts"
 
@@ -73,4 +73,20 @@ urlpatterns += [
     ),
     path("admin/create-meet/", admin_create_meet, name="admin_create_meet"),
     path("admin/create-event/", admin_create_event, name="admin_create_event"),
+    path(
+        "team/create/<int:meet_event_id>/",
+        create_team,
+        name="create_team"
+    ),
+    path(
+        "team/<int:team_id>/members/",
+        manage_team_members,
+        name="manage_team_members"
+    ),
+    path(
+        "team/<int:team_id>/set-captain/<int:member_id>/",
+        set_team_captain,
+        name="set_team_captain"
+    ),
+
 ]

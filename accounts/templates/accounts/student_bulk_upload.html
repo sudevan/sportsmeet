@@ -1,11 +1,58 @@
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Upload CSV</button>
-</form>
+{% extends 'accounts/dashboards/base_dashboard.html' %}
 
-<p><strong>CSV Format</strong></p>
-<pre>
+{% block title %}Bulk Upload Students{% endblock %}
+
+{% block page_title %}📤 Bulk Upload Students{% endblock %}
+{% block page_subtitle %}
+Upload students using a CSV file
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+
+    <!-- Upload Form -->
+    <div class="glass-card" style="max-width:600px; margin:auto;">
+        <div class="card-header">
+            <h3 class="card-title">Upload CSV File</h3>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                {{ form.as_p }}
+            </div>
+
+            <div style="margin-top:1.2rem; display:flex; gap:10px;">
+                <button type="submit" class="btn-action">
+                    ⬆ Upload CSV
+                </button>
+
+                <!-- Back button -->
+                <a href="{% url 'accounts:faculty_coordinator_dashboard' %}"
+                   class="btn-action btn-outline">
+                    ⬅ Back to Dashboard
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- CSV Format Info -->
+    <div class="glass-card" style="max-width:600px; margin:auto;">
+        <div class="card-header">
+            <h3 class="card-title">📄 CSV Format</h3>
+        </div>
+
+        <pre style="background:#111; padding:10px; border-radius:6px; color:#0f0;">
 full_name,register_number,email,department,gender
-</pre>
-<p>Gender must be: <b>MALE</b> or <b>FEMALE</b></p>
+        </pre>
+
+        <p style="margin-top:10px;">
+            <strong>Gender values allowed:</strong>
+            <span class="role-badge">MALE</span>
+            <span class="role-badge">FEMALE</span>
+        </p>
+    </div>
+
+</div>
+{% endblock %}

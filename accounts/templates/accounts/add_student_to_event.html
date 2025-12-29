@@ -1,43 +1,92 @@
-<h2>Add Students to {{ event.name }}</h2>
+{% extends 'accounts/dashboards/base_dashboard.html' %}
 
-<hr>
+{% block title %}Add Students | {{ event.name }}{% endblock %}
 
-<h3>Option 1: Search Existing Student</h3>
+{% block page_title %}➕ Add Students to Event{% endblock %}
+{% block page_subtitle %}
+Event: {{ event.name }}
+{% endblock %}
 
-<form method="get">
-    <input type="text" name="q" value="{{ query }}" placeholder="Name or Register Number">
-    <button type="submit">Search</button>
-</form>
+{% block content %}
+<div class="dashboard-grid">
 
-<table border="1">
-    <tr>
-        <th>Name</th>
-        <th>Register No</th>
-        <th>Action</th>
-    </tr>
-    {% for s in students %}
-    <tr>
-        <td>{{ s.full_name }}</td>
-        <td>{{ s.register_number }}</td>
-        <td>
-            <a href="{% url 'accounts:register_existing_student' meet_event.id s.id %}">
-                Add to Event
-            </a>
-        </td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="3">No students found</td>
-    </tr>
-    {% endfor %}
-</table>
+    <!-- Search Existing Student -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header">
+            <h3 class="card-title">🔍 Search Existing Student</h3>
+        </div>
 
-<hr>
+        <form method="get" style="margin-bottom:1rem;">
+            <div style="display:flex; gap:10px; max-width:500px;">
+                <input type="text"
+                       name="q"
+                       value="{{ query }}"
+                       placeholder="Name or Register Number"
+                       style="flex:1;">
+                <button type="submit" class="btn-action">
+                    Search
+                </button>
+            </div>
+        </form>
 
-<h3>Option 2: Add New Student</h3>
+        <div style="overflow-x:auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Register No</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr>
+                        <td>{{ s.full_name }}</td>
+                        <td>{{ s.register_number }}</td>
+                        <td>
+                            <a href="{% url 'accounts:register_existing_student' meet_event.id s.id %}"
+                               class="btn-action btn-outline">
+                                ➕ Add to Event
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="text-align:center; color:var(--text-secondary);">
+                            No students found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-<form method="post" action="{% url 'accounts:add_new_student_and_register' meet_event.id %}">
-    {% csrf_token %}
-    {{ manual_form.as_p }}
-    <button type="submit">Add & Register</button>
-</form>
+    <!-- Add New Student -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header">
+            <h3 class="card-title">🆕 Add New Student & Register</h3>
+        </div>
+
+        <form method="post" action="{% url 'accounts:add_new_student_and_register' meet_event.id %}">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                {{ manual_form.as_p }}
+            </div>
+
+            <div style="margin-top:1rem;">
+                <button type="submit" class="btn-action">
+                    ✅ Add & Register
+                </button>
+
+                <a href="{% url 'accounts:coordinator_events' %}"
+                   class="btn-action btn-outline">
+                    ⬅ Back
+                </a>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

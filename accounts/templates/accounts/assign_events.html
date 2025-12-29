@@ -6,32 +6,74 @@
 {% block page_subtitle %}Meet: {{ meet.name }}{% endblock %}
 
 {% block content %}
-<div class="glass-card" style="max-width:700px; margin:auto;">
+<div class="glass-card" style="max-width:800px;">
     <form method="post">
         {% csrf_token %}
 
-        <h3>Select Events</h3>
+        <h3>Select Events, Gender & Team Strength</h3>
+
         <ul class="list">
             {% for event in events %}
-            <li class="list-item">
+            <li class="list-item"
+                style="flex-direction:column; align-items:flex-start; gap:10px;">
+
+                <!-- Event selection -->
                 <label>
                     <input type="checkbox"
                            name="events"
                            value="{{ event.id }}"
-                           {% if event.id in assigned_event_ids %}checked{% endif %}
-                    >
-                    {{ event.name }} ({{ event.category }})
+                           {% if event.id in assigned_event_ids %}checked{% endif %}>
+                    <strong>{{ event.name }}</strong>
+                    <span style="color:var(--text-secondary);">
+                        ({{ event.category }} | {{ event.event_type }})
+                    </span>
                 </label>
+
+                <!-- Gender selection -->
+                <div style="display:flex; gap:20px; margin-left:20px;">
+                    <label>
+                        <input type="checkbox"
+                               name="boys_{{ event.id }}"
+                               {% if event.id in assigned_boys_event_ids %}checked{% endif %}>
+                        Boys
+                    </label>
+
+                    <label>
+                        <input type="checkbox"
+                               name="girls_{{ event.id }}"
+                               {% if event.id in assigned_girls_event_ids %}checked{% endif %}>
+                        Girls
+                    </label>
+                </div>
+
+                <!-- Team strength (ONLY for TEAM events) -->
+                {% if event.event_type == "TEAM" %}
+                <div style="display:flex; gap:15px; margin-left:20px;">
+                    <input type="number"
+                           name="min_{{ event.id }}"
+                           placeholder="Min players"
+                           min="1"
+                           value="{{ team_min_sizes.event.id|default:'' }}">
+
+                    <input type="number"
+                           name="max_{{ event.id }}"
+                           placeholder="Max players"
+                           min="1"
+                           value="{{ team_max_sizes.event.id|default:'' }}">
+                </div>
+                {% endif %}
+
             </li>
             {% empty %}
             <li class="list-item">No active events</li>
             {% endfor %}
         </ul>
 
-        <div style="margin-top:1rem;">
+        <div style="margin-top:1.5rem;">
             <button type="submit" class="btn-action">
-                ✅ Add Selected Events
+                💾 Save Events
             </button>
+
             <a href="{% url 'accounts:faculty_coordinator_dashboard' %}"
                class="btn-action btn-outline">
                 ⬅ Back

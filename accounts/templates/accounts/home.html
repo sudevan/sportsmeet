@@ -1,69 +1,55 @@
-<!DOCTYPE html>
-<html>
+{% extends 'accounts/dashboards/base_dashboard.html' %}
 
-<head>
-    <title>Sports Meet – Home</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-        }
+{% block title %}Sports Meet | Home{% endblock %}
 
-        .container {
-            width: 600px;
-            margin: 60px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-        }
+{% block page_title %}🏆 Sports Meet Management{% endblock %}
+{% block page_subtitle %}
+Choose your dashboard to continue
+{% endblock %}
 
-        h2 {
-            text-align: center;
-        }
+{% block content %}
+<div class="dashboard-grid" style="justify-items:center;">
 
-        .section {
-            margin-top: 25px;
-        }
-
-        .btn {
-            display: block;
-            padding: 12px;
-            margin: 10px 0;
-            text-align: center;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-
-        .btn:hover {
-            background: #0056b3;
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="container">
-        <h2>🏆 Sports Meet Management</h2>
-
-        <div class="section">
-            <h3>🏠 Dashboards</h3>
-            {% if user.role == "FACULTY_COORDINATOR" %}
-            <a class="btn" href="{% url 'accounts:faculty_coordinator_dashboard' %}">Faculty Coordinator Dashboard</a>
-            {% elif user.role == "FACULTY" %}
-            <a class="btn" href="{% url 'accounts:faculty_dashboard' %}">Faculty Dashboard</a>
-            {% elif user.role == "STUDENT_COORDINATOR" %}
-            <a class="btn" href="{% url 'accounts:student_coordinator_dashboard' %}">Student Coordinator Dashboard</a>
-            {% elif user.role == "STUDENT" %}
-            <a class="btn" href="{% url 'accounts:student_dashboard' %}">Student Dashboard</a>
-            {% endif %}
+    <!-- Dashboard Selector -->
+    <div class="glass-card" style="max-width:500px; width:100%;">
+        <div class="card-header">
+            <h3 class="card-title">🏠 Dashboards</h3>
         </div>
 
-        <hr>
-        <a class="btn" href="{% url 'accounts:logout' %}" style="background: #dc3545;">Logout</a>
+        {% if user.role == "ADMIN" %}
+            <a class="btn-action" href="{% url 'accounts:admin_dashboard' %}">
+                🛠 Admin Dashboard
+            </a>
+
+        {% elif user.role == "FACULTY_COORDINATOR" %}
+            <a class="btn-action" href="{% url 'accounts:faculty_coordinator_dashboard' %}">
+                👨‍🏫 Faculty Coordinator Dashboard
+            </a>
+
+        {% elif user.role == "FACULTY" %}
+            <a class="btn-action" href="{% url 'accounts:faculty_dashboard' %}">
+                📘 Faculty Dashboard
+            </a>
+
+        {% elif user.role == "STUDENT_COORDINATOR" %}
+            <a class="btn-action" href="{% url 'accounts:student_coordinator_dashboard' %}">
+                🎓 Student Coordinator Dashboard
+            </a>
+
+        {% elif user.role == "STUDENT" %}
+            <a class="btn-action" href="{% url 'accounts:student_dashboard' %}">
+                🧑‍🎓 Student Dashboard
+            </a>
+        {% endif %}
+
+        <hr style="margin:20px 0; border-color:var(--border-color);">
+
+        <a class="btn-action btn-outline"
+           href="{% url 'accounts:logout' %}"
+           style="border-color:#dc3545; color:#dc3545;">
+            🚪 Logout
+        </a>
     </div>
 
-</body>
-
-</html>
+</div>
+{% endblock %}

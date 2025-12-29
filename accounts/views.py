@@ -1,4 +1,5 @@
 import csv
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -8,7 +9,7 @@ from django.db.models import Q
 
 from .models import User, Department, UserRole
 from .forms import StudentBulkUploadForm, ManualStudentAddForm, LoginForm
-from meet.models import Event, EventStatus, Meet, MeetEvent, MeetStatus, Registration
+from meet.models import Event, EventStatus, EventType, Meet, MeetEvent, MeetStatus, Registration, Team, TeamMember
 
 
 
@@ -338,11 +339,12 @@ def student_event_register(request, meet_event_id):
     if event.status != "ACTIVE":
         return HttpResponseForbidden("Event is not active")
 
-    if request.user.gender == "MALE" and not event.gender_boys:
+    if request.user.gender == "MALE" and not meet_event.gender_boys:
         return HttpResponseForbidden("Not allowed")
 
-    if request.user.gender == "FEMALE" and not event.gender_girls:
+    if request.user.gender == "FEMALE" and not meet_event.gender_girls:
         return HttpResponseForbidden("Not allowed")
+
 
     Registration.objects.get_or_create(
         meet_event=meet_event,
@@ -428,9 +430,10 @@ def student_dashboard(request):
     registered_meet_event_ids = registrations.values_list("meet_event_id", flat=True)
     
     if request.user.gender == "MALE":
-        q_gender = Q(event__gender_boys=True)
+        q_gender = Q(gender_boys=True)
     else:
-        q_gender = Q(event__gender_girls=True)
+        q_gender = Q(gender_girls=True)
+
         
     available_events = MeetEvent.objects.filter(
         meet__status=MeetStatus.ACTIVE, 
@@ -472,22 +475,25 @@ def admin_meet_event_assign(request, meet_id):
         return HttpResponseForbidden("Access Denied!!!")
 
     meet = get_object_or_404(Meet, id=meet_id)
-
     events = Event.objects.filter(status="ACTIVE")
 
-    # ✅ fetch already assigned events
-    assigned_event_ids = MeetEvent.objects.filter(
-        meet=meet
+    assigned_meet_events = MeetEvent.objects.filter(meet=meet)
+    assigned_event_ids = assigned_meet_events.filter(
+        is_active=True
     ).values_list("event_id", flat=True)
 
     if request.method == "POST":
-        selected_event_ids = request.POST.getlist("events")
+        selected_event_ids = set(map(int, request.POST.getlist("events")))
 
-        for event_id in selected_event_ids:
-            MeetEvent.objects.get_or_create(
+        for event in events:
+            meet_event, created = MeetEvent.objects.get_or_create(
                 meet=meet,
-                event_id=event_id
+                event=event
             )
+
+            # ✅ toggle active/inactive
+            meet_event.is_active = event.id in selected_event_ids
+            meet_event.save()
 
         return redirect("accounts:admin_dashboard")
 
@@ -497,9 +503,10 @@ def admin_meet_event_assign(request, meet_id):
         {
             "meet": meet,
             "events": events,
-            "assigned_event_ids": assigned_event_ids,  # ✅ added
+            "assigned_event_ids": assigned_event_ids,
         }
     )
+
 
 
 
@@ -535,8 +542,6 @@ def admin_create_event(request):
             name=request.POST["name"],
             category=request.POST["category"],
             event_type=request.POST["event_type"],
-            gender_boys=bool(request.POST.get("gender_boys")),
-            gender_girls=bool(request.POST.get("gender_girls")),
             status=request.POST["status"]
         )
         return redirect("accounts:admin_dashboard")
@@ -553,23 +558,82 @@ def faculty_assign_events_to_meet(request, meet_id):
         return HttpResponseForbidden("Access denied")
 
     meet = get_object_or_404(Meet, id=meet_id, status=MeetStatus.ACTIVE)
-
     events = Event.objects.filter(status=EventStatus.ACTIVE)
+
+    assigned_meet_events = MeetEvent.objects.filter(meet=meet)
+
+    assigned_event_ids = assigned_meet_events.filter(
+        is_active=True
+    ).values_list("event_id", flat=True)
+
+    assigned_boys_event_ids = assigned_meet_events.filter(
+        gender_boys=True
+    ).values_list("event_id", flat=True)
+
+    assigned_girls_event_ids = assigned_meet_events.filter(
+        gender_girls=True
+    ).values_list("event_id", flat=True)
 
     if request.method == "POST":
         selected_event_ids = request.POST.getlist("events")
 
-        for event_id in selected_event_ids:
-            MeetEvent.objects.get_or_create(
+        for event in events.filter(id__in=selected_event_ids):
+
+            boys = request.POST.get(f"boys_{event.id}") == "on"
+            girls = request.POST.get(f"girls_{event.id}") == "on"
+
+            if not boys and not girls:
+                messages.error(
+                    request,
+                    f"Select at least one gender for {event.name}"
+                )
+                return redirect(request.path)
+
+            min_size = request.POST.get(f"min_{event.id}")
+            max_size = request.POST.get(f"max_{event.id}")
+
+            if event.event_type == EventType.TEAM:
+                if not min_size or not max_size:
+                    messages.error(
+                        request,
+                        f"Set team strength for {event.name}"
+                    )
+                    return redirect(request.path)
+
+                min_size = int(min_size)
+                max_size = int(max_size)
+            else:
+                min_size = None
+                max_size = None
+
+        
+            meet_event = MeetEvent.objects.filter(
                 meet=meet,
-                event_id=event_id
-            )
+                event=event
+            ).first()
+
+            if not meet_event:
+                meet_event = MeetEvent(
+                    meet=meet,
+                    event=event
+                )
+
+            meet_event.gender_boys = boys
+            meet_event.gender_girls = girls
+            meet_event.min_team_size = min_size
+            meet_event.max_team_size = max_size
+            meet_event.is_active = True
+
+            meet_event.save()
+
+        # deactivate unselected events
+        MeetEvent.objects.filter(
+            meet=meet
+        ).exclude(
+            event_id__in=selected_event_ids
+        ).update(is_active=False)
 
         return redirect("accounts:faculty_coordinator_dashboard")
-
-    assigned_event_ids = MeetEvent.objects.filter(
-        meet=meet
-    ).values_list("event_id", flat=True)
 
     return render(
         request,
@@ -578,8 +642,141 @@ def faculty_assign_events_to_meet(request, meet_id):
             "meet": meet,
             "events": events,
             "assigned_event_ids": assigned_event_ids,
+            "assigned_boys_event_ids": assigned_boys_event_ids,
+            "assigned_girls_event_ids": assigned_girls_event_ids,
         }
     )
+
+
+
+
+
+@login_required
+def create_team(request, meet_event_id):
+    if request.user.role not in (
+        UserRole.ADMIN,
+        UserRole.FACULTY_COORDINATOR,
+    ):
+        return HttpResponseForbidden("Not allowed")
+    
+    # if request.user.role == UserRole.FACULTY_COORDINATOR:
+    #     if meet_event.meet.department != request.user.department:
+    #         return HttpResponseForbidden("Not your department")
+
+
+    meet_event = get_object_or_404(
+        MeetEvent,
+        id=meet_event_id,
+        event__event_type=EventType.TEAM,
+        is_active=True,
+    )
+
+    if request.method == "POST":
+        name = request.POST.get("name")
+
+        if not name:
+            messages.error(request, "Team name required")
+            return redirect(request.path)
+
+        Team.objects.create(
+            meet_event=meet_event,
+            name=name,
+            created_by=request.user
+        )
+
+        messages.success(request, "Team created")
+        return redirect(
+            "accounts:manage_team_members",
+            team_id=Team.objects.latest("id").id
+        )
+
+    return render(
+        request,
+        "accounts/team/create_team.html",
+        {"meet_event": meet_event}
+    )
+
+
+
+
+
+@login_required
+def manage_team_members(request, team_id):
+    team = get_object_or_404(Team, id=team_id)
+    meet_event = team.meet_event
+
+    if request.user.role not in (
+        UserRole.ADMIN,
+        UserRole.FACULTY_COORDINATOR,
+    ):
+        return HttpResponseForbidden("Not allowed")
+
+    students = User.objects.filter(
+        role=UserRole.STUDENT,
+        gender__in=[
+            "MALE" if meet_event.gender_boys else "",
+            "FEMALE" if meet_event.gender_girls else "",
+        ]
+    )
+
+    members = TeamMember.objects.filter(team=team)
+
+    if request.method == "POST":
+        student_id = request.POST.get("student")
+
+        student = get_object_or_404(User, id=student_id)
+
+        TeamMember.objects.get_or_create(
+            team=team,
+            student=student
+        )
+
+        messages.success(request, "Student added")
+        return redirect(request.path)
+
+    return render(
+        request,
+        "accounts/team/manage_members.html",
+        {
+            "team": team,
+            "students": students,
+            "members": members,
+        }
+    )
+
+
+
+
+
+@login_required
+def set_team_captain(request, team_id, member_id):
+    team = get_object_or_404(Team, id=team_id)
+
+    if request.user.role not in (
+        UserRole.ADMIN,
+        UserRole.FACULTY_COORDINATOR,
+    ):
+        return HttpResponseForbidden("Not allowed")
+
+    TeamMember.objects.filter(
+        team=team,
+        is_captain=True
+    ).update(is_captain=False)
+
+    member = get_object_or_404(
+        TeamMember,
+        id=member_id,
+        team=team
+    )
+    member.is_captain = True
+    member.save()
+
+    messages.success(request, "Captain assigned")
+    return redirect(
+        "accounts:manage_team_members",
+        team_id=team.id
+    )
+
 
 
 

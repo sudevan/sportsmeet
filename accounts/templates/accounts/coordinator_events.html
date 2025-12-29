@@ -1,23 +1,70 @@
-<h2>Active Events</h2>
+{% extends 'accounts/dashboards/base_dashboard.html' %}
 
-<table border="1" cellpadding="6">
-    <tr>
-        <th>Event</th>
-        <th>Action</th>
-    </tr>
+{% block title %}Active Events | Sports Meet{% endblock %}
 
-    {% for me in meet_events %}
-    <tr>
-        <td>{{ me.event.name }} ({{ me.meet.name }})</td>
-        <td>
-            <a href="{% url 'accounts:add_student_to_event' me.id %}">
-                Add Students
-            </a>
-        </td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="2">No active events in current meets</td>
-    </tr>
-    {% endfor %}
-</table>
+{% block page_title %}🏟️ Active Events{% endblock %}
+{% block page_subtitle %}
+Select an event to add students
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+
+    <!-- Active Events List -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header">
+            <h3 class="card-title">Active Events in Current Meets</h3>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Meet</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for me in meet_events %}
+                    <tr>
+                        <td>
+                            <strong>{{ me.event.name }}</strong>
+                        </td>
+                        <td style="color:var(--text-secondary);">
+                            {{ me.meet.name }}
+                        </td>
+                        <td>
+                            {% if me.event.event_type == "TEAM" %}
+                                <a href="{% url 'accounts:create_team' me.id %}"
+                                class="btn-action btn-outline">
+                                    👥 Create Team
+                                </a>
+                            {% else %}
+                                <a href="{% url 'accounts:add_student_to_event' me.id %}"
+                                class="btn-action">
+                                    ➕ Add Students
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="text-align:center; color:var(--text-secondary);">
+                            No active events in current meets
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Back button -->
+        <a href="{% url 'accounts:faculty_coordinator_dashboard' %}"
+            class="btn-action btn-outline">
+            ⬅ Back to Dashboard
+        </a>
+    </div>
+
+</div>
+{% endblock %}

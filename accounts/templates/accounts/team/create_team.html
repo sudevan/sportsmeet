@@ -1,0 +1,14 @@
+{% extends "accounts/dashboards/base_dashboard.html" %}
+
+{% block page_title %}Create Team{% endblock %}
+
+{% block content %}
+<div class="glass-card" style="max-width:500px;">
+    <form method="post">
+        {% csrf_token %}
+        <label>Team Name</label>
+        <input type="text" name="name" required>
+        <button class="btn-action">Create Team</button>
+    </form>
+</div>
+{% endblock %}

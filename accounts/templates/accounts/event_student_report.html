@@ -1,38 +1,84 @@
-<h2>🏟️ Event → Registered Students</h2>
+{% extends 'accounts/dashboards/base_dashboard.html' %}
 
-<form method="get">
-    <input type="text" name="q" value="{{ query }}" placeholder="Search by name or register number">
-    <button type="submit">Search</button>
-</form>
+{% block title %}Event Registrations | Sports Meet{% endblock %}
 
-<hr>
+{% block page_title %}📋 Event → Registered Students{% endblock %}
+{% block page_subtitle %}
+View students registered for each event
+{% endblock %}
 
-{% for item in events %}
-<div style="margin-bottom: 35px;">
-    <h3>{{ item.event.name }} ({{ item.meet_event.meet.name }})</h3>
+{% block content %}
+<div class="dashboard-grid">
 
-    {% if item.registrations %}
-    <table border="1" cellpadding="6" cellspacing="0" width="100%">
-        <tr style="background:#f0f0f0;">
-            <th>Name</th>
-            <th>Register No</th>
-            <th>Department</th>
-            <th>Email</th>
-        </tr>
+    <!-- Search -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <form method="get">
+            <div style="display:flex; gap:10px; max-width:500px;">
+                <input type="text"
+                       name="q"
+                       value="{{ query }}"
+                       placeholder="Search by name or register number"
+                       style="flex:1;">
+                <button type="submit" class="btn-action">
+                    🔍 Search
+                </button>
+                <!-- Back button -->
+                <a href="{% url 'accounts:faculty_coordinator_dashboard' %}"
+                   class="btn-action btn-outline">
+                    ⬅ Back to Dashboard
+                </a>
+            </div>
+        </form>
+    </div>
 
-        {% for reg in item.registrations %}
-        <tr>
-            <td>{{ reg.participant.full_name }}</td>
-            <td>{{ reg.participant.register_number }}</td>
-            <td>{{ reg.participant.department.name }}</td>
-            <td>{{ reg.participant.email }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p style="color: gray;">No students registered</p>
-    {% endif %}
+    <!-- Event-wise Registrations -->
+    {% for item in events %}
+    <div class="glass-card" style="grid-column: span 2; margin-bottom:20px;">
+        <div class="card-header">
+            <h3 class="card-title">
+                🏟️ {{ item.event.name }}
+            </h3>
+            <span style="font-size:0.85rem; color:var(--text-secondary);">
+                Meet: {{ item.meet_event.meet.name }}
+            </span>
+        </div>
+
+        {% if item.registrations %}
+        <div style="overflow-x:auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Register No</th>
+                        <th>Department</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in item.registrations %}
+                    <tr>
+                        <td>{{ reg.participant.full_name }}</td>
+                        <td>{{ reg.participant.register_number }}</td>
+                        <td>{{ reg.participant.department.name }}</td>
+                        <td>{{ reg.participant.email }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color:var(--text-secondary); padding:10px;">
+            No students registered for this event
+        </p>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div class="glass-card" style="grid-column: span 2;">
+        <p style="color:var(--text-secondary); text-align:center;">
+            No matching registrations found
+        </p>
+    </div>
+    {% endfor %}
+
 </div>
-{% empty %}
-<p>No matching registrations found</p>
-{% endfor %}
+{% endblock %}
