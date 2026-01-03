@@ -1,5 +1,8 @@
 .PHONY: help env build up down restart logs ps migrate makemigrations superuser shell django-check local-setup local-migrate local-superuser local-run
 
+# Use sudo with docker-compose to bypass permission issues
+COMPOSE := sudo docker-compose
+
 help:
 	@echo "Targets:"
 	@echo "  make env            Copy .env.example -> .env (if missing)"
@@ -23,35 +26,43 @@ env:
 	@test -f .env || cp .env.example .env
 
 build:
-	docker compose build
+	$(COMPOSE) build
 
-up: local-run
+up:
+	-$(COMPOSE) down --remove-orphans
+	-sudo docker stop sportsmeet_web_1 sportsmeet_db_1 2>/dev/null || true
+	-sudo docker rm sportsmeet_web_1 sportsmeet_db_1 2>/dev/null || true
+	$(COMPOSE) up -d --build
 
 down:
-	docker compose down
+	$(COMPOSE) down
 
 restart: down up
 
 logs:
-	docker compose logs -f
+	$(COMPOSE) logs -f
 
 ps:
-	docker compose ps
+	$(COMPOSE) ps
 
 migrate:
-	docker compose exec web python manage.py migrate
+	$(COMPOSE) run --rm web python manage.py migrate
 
 makemigrations:
-	docker compose exec web python manage.py makemigrations
+	$(COMPOSE) run --rm web python manage.py makemigrations
 
 superuser:
-	docker compose exec web python manage.py createsuperuser
+	$(COMPOSE) run --rm web python manage.py createsuperuser
 
 shell:
-	docker compose exec web python manage.py shell
+	$(COMPOSE) run --rm web python manage.py shell
 
 django-check:
-	docker compose exec web python manage.py check
+	$(COMPOSE) run --rm web python manage.py check
+
+fix-permissions:
+	sudo usermod -aG docker $(USER)
+	@echo "Permissions updated. Please log out and log back in for changes to take effect."
 
 local-setup: env
 	pip install -r requirements.txt
