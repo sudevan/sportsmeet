@@ -25,7 +25,8 @@ env:
 build:
 	docker compose build
 
-up: local-run
+up:
+	docker compose up
 
 down:
 	docker compose down
