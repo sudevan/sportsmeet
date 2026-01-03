@@ -1,0 +1,23 @@
+{% extends 'accounts/dashboards/base_dashboard.html' %}
+
+{% block page_title %}Edit Team{% endblock %}
+
+{% block content %}
+<div class="glass-card" style="max-width:400px;">
+    <form method="post">
+        {% csrf_token %}
+
+        <label>Team Name</label>
+        <input type="text" name="name" value="{{ team.name }}" required>
+
+        <button type="submit" class="btn-action">
+            💾 Save
+        </button>
+
+        <a href="{% url 'accounts:manage_team_members' team.id %}"
+           class="btn-action btn-outline">
+           ⬅ Back
+        </a>
+    </form>
+</div>
+{% endblock %}

@@ -63,6 +63,62 @@
             <li class="list-item">No meets created</li>
             {% endfor %}
         </ul>
+        <ul class="list">
+            {% for item in meets_data %}
+            <li class="list-item" style="flex-direction: column; align-items: flex-start;">
+
+                <div style="width:100%; display:flex; justify-content:space-between;">
+                    <div>
+                        <strong>{{ item.meet.name }}</strong>
+                        <p style="font-size:0.85rem; color:var(--text-secondary);">
+                            {{ item.meet.start_date }} – {{ item.meet.end_date }}
+                        </p>
+                    </div>
+                    <span class="role-badge">{{ item.meet.status }}</span>
+                </div>
+
+                <div style="margin-top:10px;">
+                    <a href="{% url 'accounts:admin_meet_event_assign' item.meet.id %}"
+                    class="btn-action">
+                        ➕ Assign Events
+                    </a>
+                </div>
+
+                <!-- ✅ Assigned Events -->
+                <div style="margin-top:15px; width:100%;">
+                    <h5 style="
+                        margin-bottom:8px;
+                        color:var(--text-secondary);
+                        font-size:0.8rem;
+                        text-transform:uppercase;
+                        letter-spacing:1px;">
+                        Assigned Events
+                    </h5>
+
+                    {% for me in item.assigned_events %}
+                        <div style="
+                            padding:10px;
+                            margin-bottom:6px;
+                            background:rgba(255,255,255,0.05);
+                            border:1px solid var(--glass-border);
+                            border-radius:6px;
+                            display:flex;
+                            justify-content:space-between;">
+                            <span>{{ me.event.name }}</span>
+                            <span style="opacity:0.6;">{{ me.event.event_type }}</span>
+                        </div>
+                    {% empty %}
+                        <p style="color:var(--text-secondary); font-style:italic;">
+                            No events assigned yet
+                        </p>
+                    {% endfor %}
+                </div>
+
+            </li>
+            {% empty %}
+            <li class="list-item">No meets created</li>
+            {% endfor %}
+        </ul>
     </div>
 
 </div>

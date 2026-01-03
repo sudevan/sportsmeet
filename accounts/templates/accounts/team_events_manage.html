@@ -1,0 +1,39 @@
+{% extends "accounts/dashboards/base_dashboard.html" %}
+
+{% block page_title %}🏀 Team Events{% endblock %}
+
+{% block content %}
+
+{% for me in meet_events %}
+<div class="glass-card">
+
+    <h3>{{ me.event.name }} – {{ me.meet.name }}</h3>
+
+    {% if me.teams.all %}
+        <ul class="list">
+        {% for team in me.teams.all %}
+            <li class="list-item">
+                <strong>{{ team.name }}</strong>
+
+                <a href="{% url 'accounts:manage_team_members' team.id %}"
+                   class="btn-action btn-outline">
+                   👥 Manage Members
+                </a>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p style="color:var(--text-secondary)">No teams created yet</p>
+    {% endif %}
+
+</div>
+{% empty %}
+<p>No team events assigned</p>
+{% endfor %}
+
+<a href="{% url 'accounts:faculty_coordinator_dashboard' %}"
+   class="btn-action btn-outline">
+    ⬅ Back to Dashboard
+</a>
+
+{% endblock %}

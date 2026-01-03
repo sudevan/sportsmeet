@@ -18,7 +18,7 @@
         </select>
 
         <label>Event Type</label>
-        <select name="event_type">
+        <select name="event_type" id="event_type">
             <option value="INDIVIDUAL">Individual</option>
             <option value="TEAM">Team</option>
         </select>
@@ -29,8 +29,49 @@
             <option value="INACTIVE">Inactive</option>
         </select>
 
+        <label>Allowed Gender</label>
+        <div>
+            <label>
+                <input type="checkbox" name="gender_boys"> Boys
+            </label>
+            <label>
+                <input type="checkbox" name="gender_girls"> Girls
+            </label>
+        </div>
+
+        <div id="team_fields" style="display:none;">
+            <label>Min Team Size</label>
+            <input type="number" name="min_team_size" min="1">
+
+            <label>Max Team Size</label>
+            <input type="number" name="max_team_size" min="1">
+        </div>
+
+        <script>
+            const eventTypeSelect = document.getElementById("event_type");
+            const teamFields = document.getElementById("team_fields");
+
+            eventTypeSelect.addEventListener("change", function () {
+                teamFields.style.display =
+                    this.value === "TEAM" ? "block" : "none";
+            });
+        </script>
+        <script>
+            document.querySelector("form").addEventListener("submit", function (e) {
+                const boys = document.querySelector("input[name='gender_boys']").checked;
+                const girls = document.querySelector("input[name='gender_girls']").checked;
+
+                if (!boys && !girls) {
+                    alert("Select at least one gender");
+                    e.preventDefault();
+                }
+            });
+        </script>
+
+
         <button type="submit" class="btn-action">Create Event</button>
-        <a href="{% url 'accounts:admin_dashboard' %}" class="btn-action btn-outline">Back</a>
+        <a href="{% url 'accounts:admin_dashboard' %}"
+           class="btn-action btn-outline">Back</a>
     </form>
 </div>
 {% endblock %}

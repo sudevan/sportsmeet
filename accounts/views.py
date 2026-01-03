@@ -1,5 +1,7 @@
 import csv
 import io
+from xml.dom import ValidationErr
+from django.core.exceptions import ValidationError
 from fpdf import FPDF
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
@@ -8,6 +10,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.http import HttpResponseForbidden, HttpResponse, FileResponse
 from django.db.models import Q
+
+
 
 from .models import User, Department, UserRole, Gender
 from .forms import StudentBulkUploadForm, ManualStudentAddForm, LoginForm
@@ -227,7 +231,7 @@ def add_student_to_event(request, meet_event_id):
                     if created:
                         added_count += 1
                         newly_added_ids.append(student.id)
-                except ValidationError as e:
+                except ValidationErr as e:
                     messages.error(request, f"Error adding {student.full_name}: {e.message_dict.get('__all__', [str(e)])[0]}")
             
             if added_count > 0:
@@ -322,6 +326,8 @@ def add_student_to_event(request, meet_event_id):
         },
     )
 
+
+
 @login_required
 def export_registered_students_pdf(request, meet_event_id):
     meet_event = get_object_or_404(MeetEvent, id=meet_event_id)
@@ -344,9 +350,7 @@ def export_registered_students_pdf(request, meet_event_id):
     
     registrations = registrations.order_by('participant__full_name')
 
-    import io
-    from fpdf import FPDF
-    from django.http import FileResponse
+    
 
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -414,39 +418,39 @@ def register_existing_student(request, meet_event_id, student_id):
 
 
 
-@login_required
-def add_new_student_and_register(request, meet_event_id):
-    if not is_admin_or_coordinator(request.user):
-        return HttpResponseForbidden("Not allowed")
+# @login_required
+# def add_new_student_and_register(request, meet_event_id):
+#     if not is_admin_or_coordinator(request.user):
+#         return HttpResponseForbidden("Not allowed")
 
-    if request.method != "POST":
-        return HttpResponseForbidden("Invalid request")
+#     if request.method != "POST":
+#         return HttpResponseForbidden("Invalid request")
 
-    meet_event = get_object_or_404(MeetEvent, id=meet_event_id)
-    event = meet_event.event
+#     meet_event = get_object_or_404(MeetEvent, id=meet_event_id)
+#     event = meet_event.event
 
-    if event.status != "ACTIVE":
-        return HttpResponseForbidden("Event is not active")
+#     if event.status != "ACTIVE":
+#         return HttpResponseForbidden("Event is not active")
 
 
-    form = ManualStudentAddForm(request.POST)
-    if form.is_valid():
-        student = form.save(commit=False)
+#     form = ManualStudentAddForm(request.POST)
+#     if form.is_valid():
+#         student = form.save(commit=False)
         
-        if request.user.role in (
-            UserRole.FACULTY_COORDINATOR,
-            UserRole.STUDENT_COORDINATOR,
-        ):
-            student.department = request.user.department
+#         if request.user.role in (
+#             UserRole.FACULTY_COORDINATOR,
+#             UserRole.STUDENT_COORDINATOR,
+#         ):
+#             student.department = request.user.department
             
-        student.save()
+#         student.save()
         
-        Registration.objects.get_or_create(
-            meet_event=meet_event,
-            participant=student,
-        )
+#         Registration.objects.get_or_create(
+#             meet_event=meet_event,
+#             participant=student,
+#         )
 
-    return redirect("accounts:add_student_to_event", meet_event_id=meet_event.id)
+#     return redirect("accounts:add_student_to_event", meet_event_id=meet_event.id)
 
 
 
@@ -595,28 +599,73 @@ def download_event_report_pdf(request, meet_event_id, gender=None):
 @login_required
 def student_event_register(request, meet_event_id):
     if request.user.role != UserRole.STUDENT:
-        return HttpResponseForbidden("Access Denied")
+        return HttpResponseForbidden()
 
     meet_event = get_object_or_404(MeetEvent, id=meet_event_id)
     event = meet_event.event
 
-    if event.status != "ACTIVE":
-        return HttpResponseForbidden("Event is not active")
+    if event.status != EventStatus.ACTIVE:
+        return HttpResponseForbidden()
 
-    if request.user.gender == "MALE" and not meet_event.gender_boys:
-        return HttpResponseForbidden("Not allowed")
+    if request.user.gender == "MALE" and not event.gender_boys:
+        return HttpResponseForbidden()
 
-    if request.user.gender == "FEMALE" and not meet_event.gender_girls:
-        return HttpResponseForbidden("Not allowed")
-
+    if request.user.gender == "FEMALE" and not event.gender_girls:
+        return HttpResponseForbidden()
 
     Registration.objects.get_or_create(
         meet_event=meet_event,
-        participant=request.user,
+        participant=request.user
     )
 
     return redirect("accounts:student_dashboard")
 
+
+
+
+
+@login_required
+def student_manage(request):
+    if request.user.role != UserRole.FACULTY_COORDINATOR:
+        return HttpResponseForbidden()
+
+    students = User.objects.filter(
+        role=UserRole.STUDENT,
+        registration__meet_event__event__event_type=EventType.INDIVIDUAL
+    ).distinct()
+
+    q = request.GET.get("q")
+    if q:
+        students = students.filter(
+            Q(full_name__icontains=q) |
+            Q(register_number__icontains=q)
+        )
+
+    return render(
+        request,
+        "accounts/student_manage.html",
+        {
+            "students": students
+        }
+    )
+
+
+@login_required
+def student_event_unregister(request, student_id):
+    if request.user.role != UserRole.FACULTY_COORDINATOR:
+        return HttpResponseForbidden()
+
+    Registration.objects.filter(
+        participant_id=student_id,
+        meet_event__event__event_type=EventType.INDIVIDUAL
+    ).delete()
+
+    messages.success(
+        request,
+        "Student unregistered from individual events"
+    )
+
+    return redirect("accounts:student_manage")
 
 
 
@@ -707,9 +756,10 @@ def student_dashboard(request):
     registered_meet_event_ids = registrations.values_list("meet_event_id", flat=True)
     
     if request.user.gender == "MALE":
-        q_gender = Q(gender_boys=True)
+        q_gender = Q(event__gender_boys=True)
     else:
-        q_gender = Q(gender_girls=True)
+        q_gender = Q(event__gender_girls=True)
+
 
         
     available_events = MeetEvent.objects.filter(
@@ -734,14 +784,26 @@ def admin_dashboard(request):
 
     meets = Meet.objects.all().order_by("-id")
 
+    meets_data = []
+    for meet in meets:
+        assigned_events = MeetEvent.objects.filter(
+            meet=meet,
+            is_active=True
+        ).select_related("event")
+
+        meets_data.append({
+            "meet": meet,
+            "assigned_events": assigned_events
+        })
+
     return render(
         request,
         "accounts/admin/dashboard.html",
         {
-            "meets": meets
+            "meets_data": meets_data
         }
     )
-    
+
 
 
 
@@ -812,18 +874,30 @@ def admin_create_meet(request):
 @login_required
 def admin_create_event(request):
     if request.user.role != UserRole.ADMIN:
-        return HttpResponseForbidden("Access denied")
+        return HttpResponseForbidden()
 
     if request.method == "POST":
-        Event.objects.create(
-            name=request.POST["name"],
-            category=request.POST["category"],
-            event_type=request.POST["event_type"],
-            status=request.POST["status"]
-        )
-        return redirect("accounts:admin_dashboard")
+        try:
+            Event.objects.create(
+                name=request.POST.get("name"),
+                category=request.POST.get("category"),
+                event_type=request.POST.get("event_type"),
+                gender_boys="gender_boys" in request.POST,
+                gender_girls="gender_girls" in request.POST,
+                min_team_size=request.POST.get("min_team_size") or None,
+                max_team_size=request.POST.get("max_team_size") or None,
+                status=request.POST.get("status"),
+            )
+            messages.success(request, "Event created successfully")
+            return redirect("accounts:admin_dashboard")
+
+        except ValidationError as e:
+            # 👇 THIS IS THE FIX
+            for msg in e.messages:
+                messages.error(request, msg)
 
     return render(request, "accounts/admin/create_event.html")
+
 
 
 
@@ -832,83 +906,27 @@ def admin_create_event(request):
 @login_required
 def faculty_assign_events_to_meet(request, meet_id):
     if request.user.role != UserRole.FACULTY_COORDINATOR:
-        return HttpResponseForbidden("Access denied")
+        return HttpResponseForbidden()
 
     meet = get_object_or_404(Meet, id=meet_id, status=MeetStatus.ACTIVE)
     events = Event.objects.filter(status=EventStatus.ACTIVE)
 
-    assigned_meet_events = MeetEvent.objects.filter(meet=meet)
-
-    assigned_event_ids = assigned_meet_events.filter(
+    assigned_event_ids = MeetEvent.objects.filter(
+        meet=meet,
         is_active=True
-    ).values_list("event_id", flat=True)
-
-    assigned_boys_event_ids = assigned_meet_events.filter(
-        gender_boys=True
-    ).values_list("event_id", flat=True)
-
-    assigned_girls_event_ids = assigned_meet_events.filter(
-        gender_girls=True
     ).values_list("event_id", flat=True)
 
     if request.method == "POST":
         selected_event_ids = request.POST.getlist("events")
 
-        for event in events.filter(id__in=selected_event_ids):
+        MeetEvent.objects.filter(meet=meet).update(is_active=False)
 
-            boys = request.POST.get(f"boys_{event.id}") == "on"
-            girls = request.POST.get(f"girls_{event.id}") == "on"
-
-            if not boys and not girls:
-                messages.error(
-                    request,
-                    f"Select at least one gender for {event.name}"
-                )
-                return redirect(request.path)
-
-            min_size = request.POST.get(f"min_{event.id}")
-            max_size = request.POST.get(f"max_{event.id}")
-
-            if event.event_type == EventType.TEAM:
-                if not min_size or not max_size:
-                    messages.error(
-                        request,
-                        f"Set team strength for {event.name}"
-                    )
-                    return redirect(request.path)
-
-                min_size = int(min_size)
-                max_size = int(max_size)
-            else:
-                min_size = None
-                max_size = None
-
-        
-            meet_event = MeetEvent.objects.filter(
+        for event_id in selected_event_ids:
+            MeetEvent.objects.update_or_create(
                 meet=meet,
-                event=event
-            ).first()
-
-            if not meet_event:
-                meet_event = MeetEvent(
-                    meet=meet,
-                    event=event
-                )
-
-            meet_event.gender_boys = boys
-            meet_event.gender_girls = girls
-            meet_event.min_team_size = min_size
-            meet_event.max_team_size = max_size
-            meet_event.is_active = True
-
-            meet_event.save()
-
-        # deactivate unselected events
-        MeetEvent.objects.filter(
-            meet=meet
-        ).exclude(
-            event_id__in=selected_event_ids
-        ).update(is_active=False)
+                event_id=event_id,
+                defaults={"is_active": True}
+            )
 
         return redirect("accounts:faculty_coordinator_dashboard")
 
@@ -919,10 +937,9 @@ def faculty_assign_events_to_meet(request, meet_id):
             "meet": meet,
             "events": events,
             "assigned_event_ids": assigned_event_ids,
-            "assigned_boys_event_ids": assigned_boys_event_ids,
-            "assigned_girls_event_ids": assigned_girls_event_ids,
         }
     )
+
 
 
 
@@ -935,11 +952,6 @@ def create_team(request, meet_event_id):
         UserRole.FACULTY_COORDINATOR,
     ):
         return HttpResponseForbidden("Not allowed")
-    
-    # if request.user.role == UserRole.FACULTY_COORDINATOR:
-    #     if meet_event.meet.department != request.user.department:
-    #         return HttpResponseForbidden("Not your department")
-
 
     meet_event = get_object_or_404(
         MeetEvent,
@@ -955,7 +967,7 @@ def create_team(request, meet_event_id):
             messages.error(request, "Team name required")
             return redirect(request.path)
 
-        Team.objects.create(
+        team = Team.objects.create(
             meet_event=meet_event,
             name=name,
             created_by=request.user
@@ -964,7 +976,7 @@ def create_team(request, meet_event_id):
         messages.success(request, "Team created")
         return redirect(
             "accounts:manage_team_members",
-            team_id=Team.objects.latest("id").id
+            team_id=team.id
         )
 
     return render(
@@ -981,6 +993,7 @@ def create_team(request, meet_event_id):
 def manage_team_members(request, team_id):
     team = get_object_or_404(Team, id=team_id)
     meet_event = team.meet_event
+    event = meet_event.event
 
     if request.user.role not in (
         UserRole.ADMIN,
@@ -991,24 +1004,36 @@ def manage_team_members(request, team_id):
     students = User.objects.filter(
         role=UserRole.STUDENT,
         gender__in=[
-            "MALE" if meet_event.gender_boys else "",
-            "FEMALE" if meet_event.gender_girls else "",
+            "MALE" if event.gender_boys else "",
+            "FEMALE" if event.gender_girls else "",
         ]
     )
+
+    if request.user.role == UserRole.FACULTY_COORDINATOR:
+        students = students.filter(department=request.user.department)
 
     members = TeamMember.objects.filter(team=team)
 
     if request.method == "POST":
-        student_id = request.POST.get("student")
+        current_count = members.count()
 
+        if event.max_team_size and current_count >= event.max_team_size:
+            messages.error(request, "Team is already full")
+            return redirect(request.path)
+
+        student_id = request.POST.get("student")
         student = get_object_or_404(User, id=student_id)
 
-        TeamMember.objects.get_or_create(
+        obj, created = TeamMember.objects.get_or_create(
             team=team,
             student=student
         )
 
-        messages.success(request, "Student added")
+        if not created:
+            messages.warning(request, "Student already in team")
+        else:
+            messages.success(request, "Student added")
+
         return redirect(request.path)
 
     return render(
@@ -1018,8 +1043,12 @@ def manage_team_members(request, team_id):
             "team": team,
             "students": students,
             "members": members,
+            "current_count": members.count(),
+            "max_size": event.max_team_size,
+            "is_full": event.max_team_size and members.count() >= event.max_team_size,
         }
     )
+
 
 
 
@@ -1054,6 +1083,28 @@ def set_team_captain(request, team_id, member_id):
         team_id=team.id
     )
 
+
+
+
+
+@login_required
+def team_events_manage(request):
+    if request.user.role != UserRole.FACULTY_COORDINATOR:
+        return HttpResponseForbidden("Access denied")
+
+    meet_events = MeetEvent.objects.filter(
+        event__event_type=EventType.TEAM,
+        meet__status=MeetStatus.ACTIVE,
+        is_active=True
+    ).select_related("event", "meet").prefetch_related("teams")
+
+    return render(
+        request,
+        "accounts/team_events_manage.html",
+        {
+            "meet_events": meet_events
+        }
+    )
 
 
 

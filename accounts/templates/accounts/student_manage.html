@@ -1,0 +1,42 @@
+{% extends "accounts/dashboards/base_dashboard.html" %}
+
+{% block page_title %}🛠 Manage Students{% endblock %}
+
+{% block content %}
+<div class="glass-card">
+
+<form method="get">
+    <input name="q" placeholder="Search student">
+    <button class="btn-action">Search</button>
+    <a href="{% url 'accounts:faculty_coordinator_dashboard' %}"
+       class="btn-action btn-outline">
+        ⬅ Back to Dashboard
+    </a>
+</form>
+
+<table class="table">
+<tr>
+    <th>Name</th>
+    <th>Register No</th>
+    <th>Actions</th>
+</tr>
+
+{% for s in students %}
+<tr>
+    <td>{{ s.full_name }}</td>
+    <td>{{ s.register_number }}</td>
+    <td>
+        <a href="{% url 'accounts:student_event_unregister' s.id %}">
+            ❌ Unregister from Event
+        </a>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="3">No students found</td>
+</tr>
+{% endfor %}
+</table>
+
+</div>
+{% endblock %}

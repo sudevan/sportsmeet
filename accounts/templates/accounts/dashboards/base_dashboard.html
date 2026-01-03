@@ -339,44 +339,58 @@
             <!-- Faculty Coordinator Menu -->
             {% if request.user.role == "FACULTY_COORDINATOR" %}
 
-            <li class="nav-item">
-                <a href="{% url 'accounts:student_list' %}" class="nav-link">
-                    <span>👥 View Students</span>
-                </a>
-            </li>
+                <li class="nav-item">
+                    <a href="{% url 'accounts:student_list' %}" class="nav-link">
+                        <span>👥 View Students</span>
+                    </a>
+                </li>
 
-            <li class="nav-item">
-                <a href="{% url 'accounts:student_bulk_upload' %}" class="nav-link">
-                    <span>📤 Bulk Upload</span>
-                </a>
-            </li>
+                <li class="nav-item">
+                    <a href="{% url 'accounts:student_manage' %}" class="nav-link">
+                        <span>🧑‍🎓 Manage Student Events</span>
+                    </a>
+                </li>
 
-            <li class="nav-item">
-                <a href="{% url 'accounts:student_search' %}" class="nav-link">
-                    <span>🔍 Search Students</span>
-                </a>
-            </li>
+                <li class="nav-item">
+                    <a href="{% url 'accounts:team_events_manage' %}" class="nav-link">
+                        <span>🏀 Manage Team Events</span>
+                    </a>
+                </li>
 
-            <li class="nav-item">
-                <a href="{% url 'accounts:results_dashboard' %}"
+                <li class="nav-item">
+                    <a href="{% url 'accounts:student_bulk_upload' %}" class="nav-link">
+                        <span>📤 Bulk Upload</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'accounts:student_search' %}" class="nav-link">
+                        <span>🔍 Search Students</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'accounts:results_dashboard' %}"
                     class="nav-link {% if request.resolver_match.url_name == 'results_dashboard' or request.resolver_match.url_name == 'manage_event_results' %}active{% endif %}">
-                    <span>🏆 Results</span>
-                </a>
-            </li>
+                        <span>🏆 Results</span>
+                    </a>
+                </li>
 
-            <li class="nav-item">
-                <a href="{% url 'accounts:event_student_report' %}" class="nav-link">
-                    <span>📋 Reports</span>
-                </a>
-            </li>
+                <li class="nav-item">
+                    <a href="{% url 'accounts:event_student_report' %}" class="nav-link">
+                        <span>📋 Reports</span>
+                    </a>
+                </li>
 
-            <li class="nav-item">
-                <a href="/django-admin/accounts/user/" class="nav-link">
-                    <span>🎓 Student Coordinator</span>
-                </a>
-            </li>
+                <li class="nav-item">
+                    <a href="/django-admin/accounts/user/" class="nav-link">
+                        <span>🎓 Student Coordinator</span>
+                    </a>
+                </li>
 
             {% endif %}
+
+
 
             {% block nav_items %}{% endblock %}
         </ul>
