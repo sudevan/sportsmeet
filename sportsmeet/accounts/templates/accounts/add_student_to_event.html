@@ -1,41 +1,244 @@
-<h2>Add Students to {{ event.name }}</h2>
+{% extends 'accounts/dashboards/base_dashboard.html' %}
 
-<hr>
+{% block title %}Add Students | {{ event.name }}{% endblock %}
 
-<h3>Option 1: Search Existing Student</h3>
+{% block page_title %}➕ Add Students to Event{% endblock %}
+{% block page_subtitle %}
+Event: {{ event.name }}
+{% endblock %}
 
-<form method="get">
-    <input type="text" name="q" value="{{ query }}" placeholder="Name or Register Number">
-    <button type="submit">Search</button>
-</form>
+{% block content %}
+<div class="dashboard-grid">
 
-<table border="1">
-<tr>
-    <th>Name</th>
-    <th>Register No</th>
-    <th>Action</th>
-</tr>
-{% for s in students %}
-<tr>
-    <td>{{ s.full_name }}</td>
-    <td>{{ s.register_number }}</td>
-    <td>
-        <a href="{% url 'accounts:register_existing_student' event.id s.id %}">
-            Add to Event
-        </a>
-    </td>
-</tr>
-{% empty %}
-<tr><td colspan="3">No students found</td></tr>
-{% endfor %}
-</table>
+    <!-- Bulk Add / Search Student -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header">
+            <h3 class="card-title">🔍 Search & Add Students</h3>
+        </div>
 
-<hr>
+        <!-- Filter Form -->
+        <form method="get" style="margin-bottom:1.5rem; display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
 
-<h3>Option 2: Add New Student</h3>
+            <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:5px;">Department</label>
+                <select name="department">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if selected_dept == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-<form method="post" action="{% url 'accounts:add_new_student_and_register' event.id %}">
-    {% csrf_token %}
-    {{ manual_form.as_p }}
-    <button type="submit">Add & Register</button>
-</form>
+            <div style="display:flex; flex-direction:column;">
+                <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:5px;">Semester</label>
+                <select name="semester">
+                    <option value="">All Semesters</option>
+                    {% for sem in semesters %}
+                    <option value="{{ sem }}" {% if selected_sem == sem %}selected{% endif %}>{{ sem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:5px;">Search</label>
+                <input type="text" name="q" value="{{ query }}" placeholder="Name or Register Number"
+                    style="width:100%;">
+            </div>
+
+            <button type="submit" class="btn-action" style="margin-bottom:0; height:42px;">
+                Search
+            </button>
+        </form>
+
+        <!-- Bulk Add Form -->
+        <form method="post">
+            {% csrf_token %}
+            <div style="overflow-x:auto;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">
+                                <input type="checkbox" id="selectAll" onclick="toggleAll(this)">
+                            </th>
+                            <th>Name</th>
+                            <th>Register No</th>
+                            <th>Department</th>
+                            <th>Semester</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="student_ids" value="{{ s.id }}" class="student-checkbox">
+                            </td>
+                            <td>{{ s.full_name }}</td>
+                            <td>{{ s.register_number }}</td>
+                            <td>{{ s.department.name|default:"-" }}</td>
+                            <td>{{ s.semester|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align:center; color:var(--text-secondary); padding: 2rem;">
+                                No students found matching filters.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if students %}
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; align-items: center; background: rgba(147, 51, 234, 0.1); padding: 1rem; border-radius: 12px; border: 1px solid rgba(147, 51, 234, 0.3);">
+                <span id="selectedCount" style="color: var(--text-primary); margin-right: 20px; font-weight: 500;">0 students selected</span>
+                <button type="submit" class="btn-action" style="margin-top:0; width:auto; background: var(--accent-primary);">
+                    ➕ Add Selected Students
+                </button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Registered Students -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 class="card-title">�� Registered Students</h3>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Total: {{ registered_registrations.count }}</span>
+        </div>
+
+        <!-- Registration Filters -->
+        <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);">
+            <form method="get" id="regFilterForm" style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
+                <input type="hidden" name="department" value="{{ selected_dept|default:'' }}">
+                <input type="hidden" name="semester" value="{{ selected_sem|default:'' }}">
+                <input type="hidden" name="q" value="{{ query|default:'' }}">
+
+                <div style="display:flex; flex-direction:column;">
+                    <label style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:5px;">Dept</label>
+                    <select name="reg_dept" style="padding: 5px 10px; font-size: 0.8rem; height: 32px; min-width: 120px;">
+                        <option value="">All</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if reg_dept == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="display:flex; flex-direction:column;">
+                    <label style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:5px;">Gender</label>
+                    <select name="reg_gender" style="padding: 5px 10px; font-size: 0.8rem; height: 32px; min-width: 100px;">
+                        <option value="">All</option>
+                        {% for g_val, g_label in genders %}
+                        <option value="{{ g_val }}" {% if reg_gender == g_val %}selected{% endif %}>{{ g_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="display:flex; flex-direction:column; flex:1; min-width: 150px;">
+                    <label style="font-size:0.7rem; color:var(--text-secondary); margin-bottom:5px;">Search</label>
+                    <input type="text" name="reg_q" value="{{ reg_q|default:'' }}" placeholder="Name/Reg No" style="padding: 5px 10px; font-size: 0.8rem; height: 32px;">
+                </div>
+
+                <button type="submit" class="btn-action" style="margin-bottom:0; height:32px; padding: 0 15px; font-size: 0.8rem; width: auto;">
+                    Search
+                </button>
+
+                <button type="submit" formaction="{% url 'accounts:export_registered_students_pdf' meet_event.id %}"
+                   class="btn-action" style="margin-bottom:0; height:32px; padding: 0 15px; font-size: 0.8rem; background: #ef4444; border:none; display: flex; align-items: center; gap: 5px; width: auto; color: white;">
+                   📥 Export PDF
+                </button>
+            </form>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Register No</th>
+                        <th>Department</th>
+                        <th>Gender</th>
+                        <th>Semester</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in registered_registrations %}
+                    <tr {% if reg.participant.id in recently_added_ids %}style="background: rgba(34, 197, 94, 0.1);"{% endif %}>
+                        <td><strong>{{ reg.participant.full_name }}</strong></td>
+                        <td>{{ reg.participant.register_number }}</td>
+                        <td>{{ reg.participant.department.name|default:"-" }}</td>
+                        <td>{{ reg.participant.get_gender_display|default:"-" }}</td>
+                        <td>{{ reg.participant.semester|default:"-" }}</td>
+                        <td>
+                            {% if reg.participant.id in recently_added_ids %}
+                            <span style="color: #4ade80; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                Just Added
+                            </span>
+                            {% else %}
+                            <span style="color: var(--text-secondary); font-size: 0.8rem;">Registered</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:var(--text-secondary); padding: 2rem;">
+                            No registered students matching current list filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function toggleAll(source) {
+            checkboxes = document.getElementsByClassName('student-checkbox');
+            for (var i = 0, n = checkboxes.length; i < n; i++) {
+                checkboxes[i].checked = source.checked;
+            }
+            updateCount();
+        }
+
+        const checkboxes = document.querySelectorAll('.student-checkbox');
+        checkboxes.forEach(chk => {
+            chk.addEventListener('change', updateCount);
+        });
+
+        function updateCount() {
+            const selected = document.querySelectorAll('.student-checkbox:checked').length;
+            const countBtn = document.getElementById('selectedCount');
+            if (countBtn) {
+                countBtn.innerText = `${selected} students selected`;
+            }
+        }
+    </script>
+
+    <!-- Add New Student -->
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header">
+            <h3 class="card-title">🆕 Add New Student & Register</h3>
+        </div>
+
+        <form method="post" action="{% url 'accounts:add_new_student_and_register' meet_event.id %}">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                {{ manual_form.as_p }}
+            </div>
+
+            <div style="margin-top:1rem;">
+                <button type="submit" class="btn-action">
+                    ✅ Add & Register
+                </button>
+
+                <a href="{% url 'accounts:coordinator_events' %}" class="btn-action btn-outline">
+                    ⬅ Back
+                </a>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

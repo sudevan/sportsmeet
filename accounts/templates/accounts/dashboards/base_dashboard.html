@@ -234,6 +234,61 @@
             color: white;
         }
 
+        /* Table Styling */
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 1rem;
+        }
+
+        .table th {
+            text-align: left;
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .table td {
+            padding: 1.2rem 1rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 1rem;
+        }
+
+        .table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .sidebar {
@@ -276,7 +331,7 @@
             <!-- Home -->
             <li class="nav-item">
                 <a href="{% url 'accounts:home' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                    class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
                     <span>🏠 Home</span>
                 </a>
             </li>
@@ -284,24 +339,25 @@
             <!-- Faculty Coordinator Menu -->
             {% if request.user.role == "FACULTY_COORDINATOR" %}
 
-                <li class="nav-item">
-                    <a href="{% url 'accounts:student_list' %}" class="nav-link">
-                        <span>👥 View Students</span>
-                    </a>
-                </li>
+            <li class="nav-item">
+                <a href="{% url 'accounts:student_list' %}" class="nav-link">
+                    <span>👥 View Students</span>
+                </a>
+            </li>
 
-                <li class="nav-item">
-                    <a href="{% url 'accounts:student_bulk_upload' %}" class="nav-link">
-                        <span>📤 Bulk Upload</span>
-                    </a>
-                </li>
+            <li class="nav-item">
+                <a href="{% url 'accounts:student_bulk_upload' %}" class="nav-link">
+                    <span>📤 Bulk Upload</span>
+                </a>
+            </li>
 
-                <li class="nav-item">
-                    <a href="{% url 'accounts:student_search' %}" class="nav-link">
-                        <span>🔍 Search Students</span>
-                    </a>
-                </li>
+            <li class="nav-item">
+                <a href="{% url 'accounts:student_search' %}" class="nav-link">
+                    <span>🔍 Search Students</span>
+                </a>
+            </li>
 
+<<<<<<< HEAD
 
                 <li class="nav-item">
                     <a href="{% url 'accounts:coordinator_events' %}" class="nav-link">
@@ -329,12 +385,26 @@
                         <span>📋 Reports</span>
                     </a>
                 </li>
+=======
+            <li class="nav-item">
+                <a href="{% url 'accounts:results_dashboard' %}"
+                    class="nav-link {% if request.resolver_match.url_name == 'results_dashboard' or request.resolver_match.url_name == 'manage_event_results' %}active{% endif %}">
+                    <span>🏆 Results</span>
+                </a>
+            </li>
+>>>>>>> 08fcc5a013bce4b3cebebca9d464789909adb068
 
-                <li class="nav-item">
-                    <a href="/django-admin/accounts/user/" class="nav-link">
-                        <span>🎓 Student Coordinator</span>
-                    </a>
-                </li>
+            <li class="nav-item">
+                <a href="{% url 'accounts:event_student_report' %}" class="nav-link">
+                    <span>📋 Reports</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a href="/django-admin/accounts/user/" class="nav-link">
+                    <span>🎓 Student Coordinator</span>
+                </a>
+            </li>
 
             {% endif %}
 
@@ -360,7 +430,7 @@
                 </div>
             </div>
         </div>
-        
+
 
         {% block content %}{% endblock %}
     </div>

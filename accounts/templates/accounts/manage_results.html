@@ -1,0 +1,182 @@
+{% extends 'accounts/dashboards/base_dashboard.html' %}
+
+{% block title %}Manage Results | {{ meet_event.event.name }}{% endblock %}
+{% block page_title %}🏆 Manage Results{% endblock %}
+{% block page_subtitle %}Event: {{ meet_event.event.name }} | Meet: {{ meet_event.meet.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pos-btn {
+        padding: 5px 12px;
+        border: 1px solid var(--glass-border);
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+    }
+
+    .pos-btn:hover {
+        background: var(--accent-primary);
+        color: white;
+    }
+
+    .pos-btn.active-1st {
+        background: #fbbf24;
+        color: black;
+        border-color: #fbbf24;
+    }
+
+    .pos-btn.active-2nd {
+        background: #94a3b8;
+        color: black;
+        border-color: #94a3b8;
+    }
+
+    .pos-btn.active-3rd {
+        background: #92400e;
+        color: white;
+        border-color: #92400e;
+    }
+
+    .winner-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+
+    .badge-1st {
+        background: #fbbf24;
+        color: black;
+    }
+
+    .badge-2nd {
+        background: #94a3b8;
+        color: black;
+    }
+
+    .badge-3rd {
+        background: #92400e;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <div class="glass-card" style="grid-column: span 2;">
+        <div class="card-header"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+                <h3 class="card-title">👨‍🎓 Student List</h3>
+                <p style="font-size: 0.8rem; color: var(--text-secondary);">Register positions for the winners</p>
+            </div>
+            <a href="{% url 'accounts:export_results_pdf' meet_event.id %}" class="btn-action"
+                style="background: #ef4444; width: auto; margin: 0; padding: 10px 20px;">
+                📥 Export Winners (PDF)
+            </a>
+        </div>
+
+        <div
+            style="margin-bottom: 2rem; background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+            <form method="get" style="display: flex; gap: 15px; align-items: flex-end;">
+                <div style="flex: 1;">
+                    <label
+                        style="display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">Search
+                        Student</label>
+                    <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Name or Register Number"
+                        style="width: 100%; border-radius: 8px;">
+                </div>
+                <button type="submit" class="btn-action"
+                    style="width: auto; margin: 0; height: 45px; padding: 0 25px;">Search</button>
+                <a href="?" class="btn-action btn-outline"
+                    style="width: auto; margin: 0; height: 45px; line-height: 45px; padding: 0 20px; text-decoration: none; text-align: center;">Reset</a>
+            </form>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Reg No</th>
+                        <th>Department</th>
+                        <th>Current Place</th>
+                        <th>Set Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr>
+                        <td><strong>{{ s.full_name }}</strong></td>
+                        <td>{{ s.register_number }}</td>
+                        <td>{{ s.department.name|default:"-" }}</td>
+                        <td>
+                            {% if s.reg.position == 1 %}
+                            <span class="winner-badge badge-1st">🥇 1st Place</span>
+                            {% elif s.reg.position == 2 %}
+                            <span class="winner-badge badge-2nd">🥈 2nd Place</span>
+                            {% elif s.reg.position == 3 %}
+                            <span class="winner-badge badge-3rd">🥉 3rd Place</span>
+                            {% elif s.reg.position %}
+                            <span class="winner-badge" style="background: var(--glass-bg);">Rank: {{ s.reg.position
+                                }}</span>
+                            {% else %}
+                            <span style="color: var(--text-secondary); font-size: 0.8rem;">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px;">
+                                <form method="post"
+                                    action="{% url 'accounts:set_registration_position' meet_event.id s.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="position" value="1">
+                                    <button type="submit"
+                                        class="pos-btn {% if s.reg.position == 1 %}active-1st{% endif %}">1</button>
+                                </form>
+                                <form method="post"
+                                    action="{% url 'accounts:set_registration_position' meet_event.id s.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="position" value="2">
+                                    <button type="submit"
+                                        class="pos-btn {% if s.reg.position == 2 %}active-2nd{% endif %}">2</button>
+                                </form>
+                                <form method="post"
+                                    action="{% url 'accounts:set_registration_position' meet_event.id s.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="position" value="3">
+                                    <button type="submit"
+                                        class="pos-btn {% if s.reg.position == 3 %}active-3rd{% endif %}">3</button>
+                                </form>
+                                <form method="post"
+                                    action="{% url 'accounts:set_registration_position' meet_event.id s.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="position" value="-1">
+                                    <button type="submit" class="pos-btn"
+                                        style="color: #ef4444; border-color: rgba(239,68,68,0.3);">×</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                            No students found matching your search.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <a href="{% url 'accounts:results_dashboard' %}" class="btn-action btn-outline" style="width: auto;">
+                ⬅ Back to Results
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

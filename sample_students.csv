@@ -1,0 +1,5 @@
+register_number,full_name,email,department,role,gender
+1001,John Doe,john@example.com,Computer Science,STUDENT,MALE
+1002,Jane Smith,jane@example.com,Computer Science,STUDENT,FEMALE
+1003,Prof. White,white@example.com,Mathematics,FACULTY_COORDINATOR,MALE
+1004,Alex Brown,alex@example.com,Physics,STUDENT_COORDINATOR,MALE

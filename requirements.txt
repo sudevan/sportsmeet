@@ -1,6 +1,10 @@
 Django>=4.2,<5.0
 psycopg2-binary>=2.9
 djangorestframework>=3.16.1
+<<<<<<< HEAD
 reportlab==4.1.0
 
+=======
+fpdf2>=2.8.0
+>>>>>>> 08fcc5a013bce4b3cebebca9d464789909adb068
 

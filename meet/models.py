@@ -210,6 +210,7 @@ class Registration(models.Model):
         related_name="registrations"
     )
     participant = models.ForeignKey(User, on_delete=models.CASCADE)
+    position = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         unique_together = ("meet_event", "participant")

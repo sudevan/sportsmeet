@@ -1,0 +1,51 @@
+{% extends 'accounts/dashboards/base_dashboard.html' %}
+
+{% block title %}Results Dashboard | Sports Meet{% endblock %}
+{% block page_title %}🏆 Results Dashboard{% endblock %}
+{% block page_subtitle %}Select an event to manage results and winners{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    {% for meet in active_meets %}
+    <div class="glass-card" style="grid-column: span 2; margin-bottom: 2rem;">
+        <div class="card-header"
+            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <h2 style="font-family: 'Orbitron', sans-serif; color: var(--accent-primary);">📅 {{ meet.name }}</h2>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">{{ meet.start_date }} - {{ meet.end_date
+                }}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+            {% for me in meet.meetevent_set.all %}
+            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.2rem; transition: transform 0.3s ease;"
+                onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h4 style="font-weight: 700; margin-bottom: 4px;">{{ me.event.name }}</h4>
+                        <span
+                            style="font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: var(--accent-primary); color: white;">
+                            {{ me.event.get_category_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                    <a href="{% url 'accounts:manage_event_results' me.id %}" class="btn-action"
+                        style="margin: 0; padding: 8px 15px; font-size: 0.85rem; background: var(--accent-primary);">
+                        Manage Results
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: var(--text-secondary); grid-column: span 2;">No events assigned to this meet.</p>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="glass-card" style="grid-column: span 2; text-align: center; padding: 3rem;">
+        <p style="color: var(--text-secondary);">No active meets found.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

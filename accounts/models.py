@@ -64,6 +64,12 @@ class Department(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def student_count(self):
+        return self.users.filter(
+            role__in=[UserRole.STUDENT, UserRole.STUDENT_COORDINATOR]
+        ).count()
     
     
 
@@ -95,6 +101,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         on_delete=models.SET_NULL,
         related_name="users",
     )
+    semester = models.CharField(max_length=20, blank=True, null=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

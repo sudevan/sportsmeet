@@ -38,6 +38,23 @@ Or:
 make migrate
 ```
 
+## Running Locally (No Docker)
+
+If you don't have Docker installed, you can use the following local setup commands:
+
+1. **One-time Setup**: Initialize the environment, install dependencies, and create an admin account (`admin`/`admin`):
+   ```bash
+   make local-setup
+   ```
+
+2. **Run the Server**:
+   ```bash
+   make local-run
+   ```
+
+3. **Access the Admin Interface**:
+   - [http://localhost:8000/admin/](http://localhost:8000/admin/)
+
 4. Create a superuser:
 
 ```bash

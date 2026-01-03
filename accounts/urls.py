@@ -1,5 +1,9 @@
 from django.urls import path
+<<<<<<< HEAD
 from .views import home, student_bulk_upload, student_search, student_list,add_student_to_event, register_existing_student,  add_new_student_and_register, coordinator_events, event_student_report, faculty_coordinator_dashboard, student_coordinator_dashboard, login_view, logout_view, student_dashboard, student_event_register, faculty_dashboard, admin_meet_event_assign, faculty_assign_events_to_meet, admin_dashboard, admin_create_meet, admin_create_event, create_team, manage_team_members, set_team_captain, team_registration_report, download_individual_event_pdf, download_team_pdf, edit_team, remove_team_member, team_events_manage, student_manage, student_event_unregister
+=======
+from .views import home, student_bulk_upload, student_search, student_list,add_student_to_event, register_existing_student,  add_new_student_and_register, coordinator_events, event_student_report, download_event_report_pdf, faculty_coordinator_dashboard, student_coordinator_dashboard, login_view, logout_view, student_dashboard, student_event_register, faculty_dashboard, admin_meet_event_assign, faculty_assign_events_to_meet, admin_dashboard, admin_create_meet, admin_create_event, create_team, manage_team_members, set_team_captain, export_registered_students_pdf, results_dashboard, manage_event_results, set_registration_position, export_results_pdf
+>>>>>>> 08fcc5a013bce4b3cebebca9d464789909adb068
 
 app_name = "accounts"
 
@@ -30,6 +34,18 @@ urlpatterns += [
         "reports/event-students/",
         event_student_report,
         name="event_student_report",
+    ),
+    path(
+        "reports/event-students/<int:meet_event_id>/pdf/boys/",
+        download_event_report_pdf,
+        {'gender': 'boys'},
+        name="download_boys_report_pdf",
+    ),
+    path(
+        "reports/event-students/<int:meet_event_id>/pdf/girls/",
+        download_event_report_pdf,
+        {'gender': 'girls'},
+        name="download_girls_report_pdf",
     ),
     path(
         "faculty/coordinator/dashboard/",
@@ -88,6 +104,7 @@ urlpatterns += [
         set_team_captain,
         name="set_team_captain"
     ),
+<<<<<<< HEAD
     path("reports/teams/", team_registration_report, name="team_registration_report"),
 
     path(
@@ -126,4 +143,15 @@ urlpatterns += [
         student_event_unregister,
         name="student_event_unregister"
     )
+=======
+    path(
+        "events/<int:meet_event_id>/export-pdf-registrations/",
+        export_registered_students_pdf,
+        name="export_registered_students_pdf"
+    ),
+    path("results/", results_dashboard, name="results_dashboard"),
+    path("results/event/<int:meet_event_id>/", manage_event_results, name="manage_event_results"),
+    path("results/set-position/<int:meet_event_id>/<int:student_id>/", set_registration_position, name="set_registration_position"),
+    path("results/export-pdf/<int:meet_event_id>/", export_results_pdf, name="export_results_pdf"),
+>>>>>>> 08fcc5a013bce4b3cebebca9d464789909adb068
 ]

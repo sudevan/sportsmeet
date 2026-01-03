@@ -45,12 +45,15 @@ All students in your department
             </table>
         </div>
 
-        <!-- Back Button -->
         <div style="margin-top:1rem;">
-            <a href="{% url 'accounts:faculty_coordinator_dashboard' %}"
-               class="btn-action btn-outline">
-                ⬅ Back to Dashboard
-            </a>
+            {% if request.user.role == 'FACULTY_COORDINATOR' %}
+            <a href="{% url 'accounts:faculty_coordinator_dashboard' %}" class="btn-action btn-outline">⬅ Back to
+                Dashboard</a>
+            {% elif request.user.role == 'FACULTY' %}
+            <a href="{% url 'accounts:faculty_dashboard' %}" class="btn-action btn-outline">⬅ Back to Dashboard</a>
+            {% elif request.user.role == 'ADMIN' %}
+            <a href="{% url 'accounts:admin_dashboard' %}" class="btn-action btn-outline">⬅ Back to Dashboard</a>
+            {% endif %}
         </div>
     </div>
 

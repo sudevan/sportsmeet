@@ -1,0 +1,8 @@
+register_number,full_name,email,department,role,gender
+CSE001,Alice Johnson,alice@example.com,Computer Science,STUDENT,FEMALE
+CSE002,Bob Smith,bob.s@example.com,Computer Science,STUDENT_COORDINATOR,MALE
+ECE101,Charlie Davis,charlie@example.com,Electronics,STUDENT,MALE
+ECE102,Diana Prince,diana@example.com,Electronics,STUDENT,FEMALE
+ME201,Ethan Hunt,ethan@example.com,Mechanical,STUDENT,MALE
+ME202,Fiona Gallagher,fiona@example.com,Mechanical,FACULTY_COORDINATOR,FEMALE
+CSE003,George Miller,george@example.com,Computer Science,STUDENT,MALE

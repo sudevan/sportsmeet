@@ -12,6 +12,7 @@ Individual & Team Event Registrations
     <!-- Search -->
     <div class="glass-card" style="grid-column: span 2;">
         <form method="get">
+<<<<<<< HEAD
             <div style="display:flex; gap:10px; max-width:600px;">
                 <input type="text"
                        name="q"
@@ -23,6 +24,23 @@ Individual & Team Event Registrations
                    class="btn-action btn-outline">
                     ⬅ Back
                 </a>
+=======
+            <div style="display:flex; gap:10px; max-width:500px;">
+                <input type="text" name="q" value="{{ query }}" placeholder="Search by name or register number"
+                    style="flex:1;">
+                <button type="submit" class="btn-action">
+                    🔍 Search
+                </button>
+                <!-- Back button -->
+                {% if request.user.role == 'FACULTY_COORDINATOR' %}
+                <a href="{% url 'accounts:faculty_coordinator_dashboard' %}" class="btn-action btn-outline">⬅ Back to
+                    Dashboard</a>
+                {% elif request.user.role == 'FACULTY' %}
+                <a href="{% url 'accounts:faculty_dashboard' %}" class="btn-action btn-outline">⬅ Back to Dashboard</a>
+                {% elif request.user.role == 'ADMIN' %}
+                <a href="{% url 'accounts:admin_dashboard' %}" class="btn-action btn-outline">⬅ Back to Dashboard</a>
+                {% endif %}
+>>>>>>> 08fcc5a013bce4b3cebebca9d464789909adb068
             </div>
         </form>
     </div>
@@ -38,6 +56,7 @@ Individual & Team Event Registrations
             <h3 class="card-title">
                 {{ item.event.name }} ({{ item.meet_event.meet.name }})
             </h3>
+<<<<<<< HEAD
             <a href="{% url 'accounts:download_individual_event_pdf' item.meet_event.id %}"
                class="btn-action btn-outline">
                 ⬇ PDF
@@ -64,6 +83,89 @@ Individual & Team Event Registrations
                 {% endfor %}
             </tbody>
         </table>
+=======
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:0.85rem; color:var(--text-secondary);">
+                    Meet: {{ item.meet_event.meet.name }}
+                </span>
+                <a href="{% url 'accounts:download_boys_report_pdf' item.meet_event.id %}" class="btn-action"
+                    style="margin-top:0; width:auto; padding:0.4rem 0.8rem; font-size:0.85rem; background: linear-gradient(45deg, #3b82f6, #6366f1);">
+                    👦 Boys PDF
+                </a>
+                <a href="{% url 'accounts:download_girls_report_pdf' item.meet_event.id %}" class="btn-action"
+                    style="margin-top:0; width:auto; padding:0.4rem 0.8rem; font-size:0.85rem; background: linear-gradient(45deg, #ec4899, #a855f7);">
+                    👧 Girls PDF
+                </a>
+            </div>
+        </div>
+
+        <div class="gender-sections"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+            <!-- Boys Section -->
+            <div class="gender-card">
+                <h4
+                    style="margin: 15px 0 10px; color: var(--accent-primary); border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">
+                    👦 Boys
+                </h4>
+                {% if item.boys %}
+                <div style="overflow-x:auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Register No</th>
+                                <th>Dept</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reg in item.boys %}
+                            <tr>
+                                <td>{{ reg.participant.full_name }}</td>
+                                <td>{{ reg.participant.register_number }}</td>
+                                <td>{{ reg.participant.department.name }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p style="color:var(--text-secondary); padding:10px; font-size: 0.9rem;">None</p>
+                {% endif %}
+            </div>
+
+            <!-- Girls Section -->
+            <div class="gender-card">
+                <h4
+                    style="margin: 15px 0 10px; color: var(--accent-secondary); border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">
+                    👧 Girls
+                </h4>
+                {% if item.girls %}
+                <div style="overflow-x:auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Register No</th>
+                                <th>Dept</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reg in item.girls %}
+                            <tr>
+                                <td>{{ reg.participant.full_name }}</td>
+                                <td>{{ reg.participant.register_number }}</td>
+                                <td>{{ reg.participant.department.name }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p style="color:var(--text-secondary); padding:10px; font-size: 0.9rem;">None</p>
+                {% endif %}
+            </div>
+        </div>
+>>>>>>> 08fcc5a013bce4b3cebebca9d464789909adb068
     </div>
     {% empty %}
     <p style="grid-column: span 2; color:var(--text-secondary);">

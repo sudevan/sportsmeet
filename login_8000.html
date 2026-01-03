@@ -152,7 +152,22 @@
             font-size: 0.9rem;
         }
 
-        /* Customize Django's {{ form.as_p }} */
+        /* Customize Django's <p>
+    <label for="id_email">Email:</label>
+    <input type="email" name="email" maxlength="320" required id="id_email">
+    
+    
+  </p>
+
+  
+  <p>
+    <label for="id_password">Password:</label>
+    <input type="password" name="password" required id="id_password">
+    
+    
+      
+    
+  </p> */
         p {
             margin-bottom: 1.5rem;
             text-align: left;
@@ -202,27 +217,27 @@
             <p class="subtitle">Management System</p>
 
             <form method="post" id="loginForm">
-                {% csrf_token %}
+                <input type="hidden" name="csrfmiddlewaretoken" value="ym7VpxTLZaZPADSrDR4Q1nR7vKbhX1HcYyBNvviqla50PbO01BHklhvsYEwuXmfX">
 
-                {% if form.non_field_errors %}
-                <div class="errorlist">
-                    {{ form.non_field_errors }}
-                </div>
-                {% endif %}
+                
 
-                {% for field in form %}
+                
                 <div class="form-group">
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}"
-                        id="{{ field.id_for_label }}" value="" autocomplete="off" class="form-control"
-                        placeholder="Enter {{ field.label }}" {% if field.field.required %}required{% endif %}>
-                    {% if field.errors %}
-                    <div style="color: #ef4444; font-size: 0.8rem; margin-top: 0.3rem;">
-                        {{ field.errors.0 }}
-                    </div>
-                    {% endif %}
+                    <label for="id_email">Email</label>
+                    <input type="email" name="email"
+                        id="id_email" value="" autocomplete="off" class="form-control"
+                        placeholder="Enter Email" required>
+                    
                 </div>
-                {% endfor %}
+                
+                <div class="form-group">
+                    <label for="id_password">Password</label>
+                    <input type="password" name="password"
+                        id="id_password" value="" autocomplete="off" class="form-control"
+                        placeholder="Enter Password" required>
+                    
+                </div>
+                
 
                 <button type="submit" class="btn-login">Authorize Now</button>
             </form>
