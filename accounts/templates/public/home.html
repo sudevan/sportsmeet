@@ -1,37 +1,56 @@
-
 <a href="{% url 'accounts:login' %}">Coordinator Login</a>
-
-
 
 <form method="post">
   {% csrf_token %}
 
-  <input name="full_name" required>
-  <input name="register_number" required>
-  <select name="department" required>...</select>
-  <select name="semester" required>...</select>
+  <input type="text" name="full_name" placeholder="Full Name" required>
 
-  <label><input type="radio" name="gender" value="MALE"> Male</label>
-  <label><input type="radio" name="gender" value="FEMALE"> Female</label>
+  <input type="text" name="register_number" placeholder="Register Number" required>
+
+  <select name="department" required>
+    <option value="">Select Department</option>
+    {% for dept in departments %}
+      <option value="{{ dept.id }}">{{ dept.name }}</option>
+    {% endfor %}
+  </select>
+
+  <select name="semester" required>
+    <option value="">Select Semester</option>
+    {% for sem in semesters %}
+      <option value="{{ sem }}">{{ sem }}</option>
+    {% endfor %}
+  </select>
+
+  <label>
+    <input type="radio" name="gender" value="MALE" required> Male
+  </label>
+  <label>
+    <input type="radio" name="gender" value="FEMALE"> Female
+  </label>
 
   <h3>Individual Events (Max 3)</h3>
   {% for me in meet_events %}
     {% if me.event.event_type == "INDIVIDUAL" %}
-      <input type="checkbox" name="events" value="{{ me.id }}">
-      {{ me.event.name }}
+      <label>
+        <input type="checkbox" name="events" value="{{ me.id }}">
+        {{ me.event.name }}
+      </label><br>
     {% endif %}
   {% endfor %}
 
   <h3>Team Events (Max 2)</h3>
   {% for me in meet_events %}
     {% if me.event.event_type == "TEAM" %}
-      <strong>{{ me.event.name }}</strong>
+      <strong>{{ me.event.name }}</strong><br>
       {% for team in me.teams.all %}
-        {% if team.members.count < 6 %}
-          <input type="checkbox" name="teams" value="{{ team.id }}">
-          {{ team.name }} ({{ team.members.count }}/6)
+        {% if team.teammember_set.count < me.event.max_team_size %}
+          <label>
+            <input type="checkbox" name="teams" value="{{ team.id }}">
+            {{ team.name }} ({{ team.teammember_set.count }}/{{ me.event.max_team_size }})
+          </label><br>
         {% endif %}
       {% endfor %}
+      <br>
     {% endif %}
   {% endfor %}
 

@@ -53,7 +53,6 @@ def get_user_department(user):
         return user.department
     return None
 
-
 def public_home(request):
     active_meet = Meet.objects.filter(status=MeetStatus.ACTIVE).first()
 
@@ -64,16 +63,15 @@ def public_home(request):
     ).select_related("event")
 
     return render(request, "public/home.html", {
-        "meet_events": meet_events
+        "meet_events": meet_events,
+        "departments": Department.objects.all(),  # ✅ ADD THIS
+        "semesters": range(1, 7),                  # ✅ ADD THIS
     })
 
 
 
 
-
-
-
-def student_register(request):
+"""def student_register(request):
     if request.method == "POST":
         individual_ids = request.POST.getlist("events")
         team_ids = request.POST.getlist("teams")
@@ -92,6 +90,7 @@ def student_register(request):
                 "full_name": request.POST["full_name"],
                 "gender": request.POST["gender"],
                 "department_id": request.POST["department"],
+                "semester": request.POST["semester"], 
                 "role": UserRole.STUDENT,
             }
         )
@@ -122,12 +121,76 @@ def student_register(request):
 
 
         messages.success(request, "Registration successful!")
-        return redirect("home")
+        return redirect("home")"""
+def student_register(request):
+    if request.method == "POST":
+        required_fields = [
+            "full_name", "register_number",
+            "gender", "department", "semester"
+        ]
+        for field in required_fields:
+            if not request.POST.get(field):
+                messages.error(request, "All fields are required.")
+                return redirect("accounts:public_home")
 
+        individual_ids = request.POST.getlist("events")
+        team_ids = request.POST.getlist("teams")
 
+        if len(individual_ids) > 3:
+            messages.error(request, "Maximum 3 individual events allowed.")
+            return redirect("accounts:public_home")
 
+        if len(team_ids) > 2:
+            messages.error(request, "Maximum 2 team events allowed.")
+            return redirect("accounts:public_home")
 
+        semester = int(request.POST["semester"])
 
+        user, created = User.objects.get_or_create(
+            register_number=request.POST["register_number"],
+            defaults={
+                "full_name": request.POST["full_name"],
+                "gender": request.POST["gender"],
+                "department_id": request.POST["department"],
+                "semester": semester,
+                "role": UserRole.STUDENT,
+            }
+        )
+
+        if not created:
+            user.full_name = request.POST["full_name"]
+            user.gender = request.POST["gender"]
+            user.department_id = request.POST["department"]
+            user.semester = semester
+            user.save()
+
+            Registration.objects.filter(participant=user).delete()
+            TeamMember.objects.filter(student=user).delete()
+
+        with transaction.atomic():
+            for me_id in individual_ids:
+                Registration.objects.create(
+                    meet_event_id=me_id,
+                    participant=user
+                )
+
+            for team_id in team_ids:
+                team = get_object_or_404(Team, id=team_id)
+                max_size = team.meet_event.event.max_team_size
+                if TeamMember.objects.filter(team=team).count() >= max_size:
+                    messages.error(
+                        request,
+                        f"Team '{team.name}' is full."
+                    )
+                    continue
+
+                TeamMember.objects.create(
+                    team=team,
+                    student=user
+                )
+
+        messages.success(request, "Registration successful!")
+        return redirect("accounts:public_home")
 
 @login_required
 def student_search(request):
