@@ -61,11 +61,6 @@ class Event(models.Model):
         default=EventType.INDIVIDUAL
     )
 
-    # ✅ CORRECT LOCATION
-    gender_boys = models.BooleanField(default=False)
-    gender_girls = models.BooleanField(default=False)
-
-    min_team_size = models.PositiveIntegerField(null=True, blank=True)
     max_team_size = models.PositiveIntegerField(null=True, blank=True)
 
     status = models.CharField(
@@ -75,26 +70,24 @@ class Event(models.Model):
     )
 
     def clean(self):
-        if not self.gender_boys and not self.gender_girls:
-            raise ValidationError("Select at least one gender")
-
         if self.event_type == EventType.INDIVIDUAL:
-            self.min_team_size = None
             self.max_team_size = None
 
         if self.event_type == EventType.TEAM:
-            if not self.min_team_size or not self.max_team_size:
-                raise ValidationError("Team size is required")
-
-            if self.min_team_size > self.max_team_size:
-                raise ValidationError("Min team size cannot exceed max team size")
+            if not self.max_team_size:
+                raise ValidationError("Maximum team size is required")
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-
+        
     def __str__(self):
         return self.name
+
+
+
+
+
 
 
 class MeetEvent(models.Model):
@@ -130,15 +123,12 @@ class Team(models.Model):
 
         member_count = TeamMember.objects.filter(team=self).count()
 
-        if event.min_team_size and member_count < event.min_team_size:
-            raise ValidationError(
-                f"Minimum {event.min_team_size} players required"
-            )
-
-        if event.max_team_size and member_count > event.max_team_size:
+        if event.max_team_size and member_count >= event.max_team_size:
             raise ValidationError(
                 f"Maximum {event.max_team_size} players allowed"
             )
+
+
 
     def __str__(self):
         return self.name
@@ -159,6 +149,11 @@ class TeamMember(models.Model):
                 is_captain=True
             ).exclude(id=self.id).exists():
                 raise ValidationError("Only one captain allowed")
+            
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 
 class Registration(models.Model):
@@ -177,20 +172,16 @@ class Registration(models.Model):
         event = self.meet_event.event
         student = self.participant
 
-        if event.event_type == EventType.TEAM:
-            raise ValidationError("Team events require team registration")
-
         if self.meet_event.meet.status != MeetStatus.ACTIVE:
             raise ValidationError("Meet is not active")
 
         if event.status != EventStatus.ACTIVE:
             raise ValidationError("Event is not active")
 
-        if student.gender == "MALE" and not event.gender_boys:
-            raise ValidationError("Boys are not allowed")
+        # Gender-based separation happens here (same as before)
+        if student.gender not in ("MALE", "FEMALE"):
+            raise ValidationError("Invalid student gender")
 
-        if student.gender == "FEMALE" and not event.gender_girls:
-            raise ValidationError("Girls are not allowed")
 
     def save(self, *args, **kwargs):
         self.full_clean()

@@ -54,97 +54,75 @@ def get_user_department(user):
     return None
 
 
-@login_required
-def student_bulk_upload(request):
-    if not is_admin_or_coordinator(request.user):
-        return HttpResponseForbidden("Not allowed")
+def public_home(request):
+    active_meet = Meet.objects.filter(status=MeetStatus.ACTIVE).first()
 
-    redirect_role = None  # track highest role uploaded
+    meet_events = MeetEvent.objects.filter(
+        meet=active_meet,
+        is_active=True,
+        event__status=EventStatus.ACTIVE
+    ).select_related("event")
 
+    return render(request, "public/home.html", {
+        "meet_events": meet_events
+    })
+
+
+
+
+
+
+
+def student_register(request):
     if request.method == "POST":
-        form = StudentBulkUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            csv_file = request.FILES["csv_file"]
-            decoded = csv_file.read().decode("utf-8").splitlines()
-            reader = csv.DictReader(decoded)
+        individual_ids = request.POST.getlist("events")
+        team_ids = request.POST.getlist("teams")
 
-            try:
-                for row in reader:
-                    department_name = row.get("department")
-                    if not department_name:
-                        messages.error(request, "Missing 'department' column in CSV row.")
-                        return redirect("accounts:student_bulk_upload")
+        if len(individual_ids) > 3:
+            messages.error(request, "Max 3 individual events allowed")
+            return redirect("home")
 
-                    department, _ = Department.objects.get_or_create(
-                        name=department_name
-                    )
+        if len(team_ids) > 2:
+            messages.error(request, "Max 2 team events allowed")
+            return redirect("home")
 
-                    # Gender
-                    gender = row.get("gender", "").strip().upper()
-                    if gender not in ("MALE", "FEMALE"):
-                        gender = None
+        user, _ = User.objects.get_or_create(
+            register_number=request.POST["register_number"],
+            defaults={
+                "full_name": request.POST["full_name"],
+                "gender": request.POST["gender"],
+                "department_id": request.POST["department"],
+                "role": UserRole.STUDENT,
+            }
+        )
 
-                    # Role (default STUDENT)
-                    role = row.get("role", "STUDENT").strip().upper()
-                    if role not in (
-                        UserRole.STUDENT,
-                        UserRole.STUDENT_COORDINATOR,
-                        UserRole.FACULTY_COORDINATOR,
-                    ):
-                        role = UserRole.STUDENT
+        # Individual registrations
+        for me_id in individual_ids:
+            Registration.objects.get_or_create(
+                meet_event_id=me_id,
+                participant=user
+            )
 
-                    register_number = row.get("register_number")
-                    full_name = row.get("full_name")
-                    email = row.get("email")
+        # Team registrations
+        for team_id in team_ids:
+            team = Team.objects.get(id=team_id)
+            event = team.meet_event.event
 
-                    if not all([register_number, full_name, email]):
-                        messages.error(request, f"Missing required fields in CSV for student {register_number or 'unknown'}")
-                        continue
+            if team.teammember_set.count() >= event.max_team_size:
+                messages.error(
+                    request,
+                    f"Team '{team.name}' is full"
+                )
+                continue
 
-                    student, created = User.objects.get_or_create(
-                        register_number=register_number,
-                        defaults={
-                            "full_name": full_name,
-                            "email": email,
-                            "department": department,
-                            "role": role,
-                            "gender": gender,
-                        }
-                    )
+            TeamMember.objects.get_or_create(
+                team=team,
+                student=user
+            )
 
-                    # Update gender if missing
-                    if not created and not student.gender and gender:
-                        student.gender = gender
-                        student.save()
 
-                    # Track redirect priority
-                    if role == UserRole.FACULTY_COORDINATOR:
-                        redirect_role = UserRole.FACULTY_COORDINATOR
-                    elif role == UserRole.STUDENT_COORDINATOR and redirect_role != UserRole.FACULTY_COORDINATOR:
-                        redirect_role = UserRole.STUDENT_COORDINATOR
-
-                # 🔀 FINAL REDIRECT
-                messages.success(request, "Students uploaded successfully!")
-                if redirect_role == UserRole.FACULTY_COORDINATOR:
-                    return redirect("accounts:faculty_coordinator_dashboard")
-                elif redirect_role == UserRole.STUDENT_COORDINATOR:
-                    return redirect("accounts:student_coordinator_dashboard")
-
-                return redirect("accounts:student_list")
-            except Exception as e:
-                import traceback
-                print(traceback.format_exc())
-                messages.error(request, f"Error processing CSV: {str(e)}")
-                return redirect("accounts:student_bulk_upload")
-
-    else:
-        form = StudentBulkUploadForm()
-
-    return render(
-        request,
-        "accounts/student_bulk_upload.html",
-        {"form": form},
-    )
+        messages.success(request, "Registration successful!")
+        return redirect("home")
 
 
 
@@ -878,14 +856,13 @@ def admin_create_event(request):
 
     if request.method == "POST":
         try:
+            max_team_size = request.POST.get("max_team_size")
+            
             Event.objects.create(
                 name=request.POST.get("name"),
                 category=request.POST.get("category"),
                 event_type=request.POST.get("event_type"),
-                gender_boys="gender_boys" in request.POST,
-                gender_girls="gender_girls" in request.POST,
-                min_team_size=request.POST.get("min_team_size") or None,
-                max_team_size=request.POST.get("max_team_size") or None,
+                max_team_size=int(max_team_size) if max_team_size else None,
                 status=request.POST.get("status"),
             )
             messages.success(request, "Event created successfully")
@@ -989,99 +966,99 @@ def create_team(request, meet_event_id):
 
 
 
-@login_required
-def manage_team_members(request, team_id):
-    team = get_object_or_404(Team, id=team_id)
-    meet_event = team.meet_event
-    event = meet_event.event
+# @login_required
+# def manage_team_members(request, team_id):
+#     team = get_object_or_404(Team, id=team_id)
+#     meet_event = team.meet_event
+#     event = meet_event.event
 
-    if request.user.role not in (
-        UserRole.ADMIN,
-        UserRole.FACULTY_COORDINATOR,
-    ):
-        return HttpResponseForbidden("Not allowed")
+#     if request.user.role not in (
+#         UserRole.ADMIN,
+#         UserRole.FACULTY_COORDINATOR,
+#     ):
+#         return HttpResponseForbidden("Not allowed")
 
-    students = User.objects.filter(
-        role=UserRole.STUDENT,
-        gender__in=[
-            "MALE" if event.gender_boys else "",
-            "FEMALE" if event.gender_girls else "",
-        ]
-    )
+#     students = User.objects.filter(
+#         role=UserRole.STUDENT,
+#         gender__in=[
+#             "MALE" if event.gender_boys else "",
+#             "FEMALE" if event.gender_girls else "",
+#         ]
+#     )
 
-    if request.user.role == UserRole.FACULTY_COORDINATOR:
-        students = students.filter(department=request.user.department)
+#     if request.user.role == UserRole.FACULTY_COORDINATOR:
+#         students = students.filter(department=request.user.department)
 
-    members = TeamMember.objects.filter(team=team)
+#     members = TeamMember.objects.filter(team=team)
 
-    if request.method == "POST":
-        current_count = members.count()
+#     if request.method == "POST":
+#         current_count = members.count()
 
-        if event.max_team_size and current_count >= event.max_team_size:
-            messages.error(request, "Team is already full")
-            return redirect(request.path)
+#         if event.max_team_size and current_count >= event.max_team_size:
+#             messages.error(request, "Team is already full")
+#             return redirect(request.path)
 
-        student_id = request.POST.get("student")
-        student = get_object_or_404(User, id=student_id)
+#         student_id = request.POST.get("student")
+#         student = get_object_or_404(User, id=student_id)
 
-        obj, created = TeamMember.objects.get_or_create(
-            team=team,
-            student=student
-        )
+#         obj, created = TeamMember.objects.get_or_create(
+#             team=team,
+#             student=student
+#         )
 
-        if not created:
-            messages.warning(request, "Student already in team")
-        else:
-            messages.success(request, "Student added")
+#         if not created:
+#             messages.warning(request, "Student already in team")
+#         else:
+#             messages.success(request, "Student added")
 
-        return redirect(request.path)
+#         return redirect(request.path)
 
-    return render(
-        request,
-        "accounts/team/manage_members.html",
-        {
-            "team": team,
-            "students": students,
-            "members": members,
-            "current_count": members.count(),
-            "max_size": event.max_team_size,
-            "is_full": event.max_team_size and members.count() >= event.max_team_size,
-        }
-    )
-
-
+#     return render(
+#         request,
+#         "accounts/team/manage_members.html",
+#         {
+#             "team": team,
+#             "students": students,
+#             "members": members,
+#             "current_count": members.count(),
+#             "max_size": event.max_team_size,
+#             "is_full": event.max_team_size and members.count() >= event.max_team_size,
+#         }
+#     )
 
 
 
 
-@login_required
-def set_team_captain(request, team_id, member_id):
-    team = get_object_or_404(Team, id=team_id)
 
-    if request.user.role not in (
-        UserRole.ADMIN,
-        UserRole.FACULTY_COORDINATOR,
-    ):
-        return HttpResponseForbidden("Not allowed")
 
-    TeamMember.objects.filter(
-        team=team,
-        is_captain=True
-    ).update(is_captain=False)
+# @login_required
+# def set_team_captain(request, team_id, member_id):
+#     team = get_object_or_404(Team, id=team_id)
 
-    member = get_object_or_404(
-        TeamMember,
-        id=member_id,
-        team=team
-    )
-    member.is_captain = True
-    member.save()
+#     if request.user.role not in (
+#         UserRole.ADMIN,
+#         UserRole.FACULTY_COORDINATOR,
+#     ):
+#         return HttpResponseForbidden("Not allowed")
 
-    messages.success(request, "Captain assigned")
-    return redirect(
-        "accounts:manage_team_members",
-        team_id=team.id
-    )
+#     TeamMember.objects.filter(
+#         team=team,
+#         is_captain=True
+#     ).update(is_captain=False)
+
+#     member = get_object_or_404(
+#         TeamMember,
+#         id=member_id,
+#         team=team
+#     )
+#     member.is_captain = True
+#     member.save()
+
+#     messages.success(request, "Captain assigned")
+#     return redirect(
+#         "accounts:manage_team_members",
+#         team_id=team.id
+#     )
 
 
 
@@ -1154,9 +1131,18 @@ def login_view(request):
     return render(request, "accounts/login.html", {"form": form})
 
 
+
+
+
+
 def logout_view(request):
     logout(request)
     return redirect('accounts:login')
+
+
+
+
+
 
 @login_required
 def results_dashboard(request):
@@ -1165,6 +1151,11 @@ def results_dashboard(request):
     
     active_meets = Meet.objects.filter(status=MeetStatus.ACTIVE).prefetch_related('meetevent_set__event')
     return render(request, "accounts/results_dashboard.html", {"active_meets": active_meets})
+
+
+
+
+
 
 @login_required
 def manage_event_results(request, meet_event_id):
@@ -1201,6 +1192,12 @@ def manage_event_results(request, meet_event_id):
         "query": query
     })
 
+
+
+
+
+
+
 @login_required
 def set_registration_position(request, meet_event_id, student_id):
     if not is_admin_or_coordinator(request.user):
@@ -1230,6 +1227,12 @@ def set_registration_position(request, meet_event_id, student_id):
             messages.error(request, "Invalid position value")
             
     return redirect("accounts:manage_event_results", meet_event_id=meet_event.id)
+
+
+
+
+
+
 
 @login_required
 def export_results_pdf(request, meet_event_id):

@@ -1,0 +1,39 @@
+
+<a href="{% url 'accounts:login' %}">Coordinator Login</a>
+
+
+
+<form method="post">
+  {% csrf_token %}
+
+  <input name="full_name" required>
+  <input name="register_number" required>
+  <select name="department" required>...</select>
+  <select name="semester" required>...</select>
+
+  <label><input type="radio" name="gender" value="MALE"> Male</label>
+  <label><input type="radio" name="gender" value="FEMALE"> Female</label>
+
+  <h3>Individual Events (Max 3)</h3>
+  {% for me in meet_events %}
+    {% if me.event.event_type == "INDIVIDUAL" %}
+      <input type="checkbox" name="events" value="{{ me.id }}">
+      {{ me.event.name }}
+    {% endif %}
+  {% endfor %}
+
+  <h3>Team Events (Max 2)</h3>
+  {% for me in meet_events %}
+    {% if me.event.event_type == "TEAM" %}
+      <strong>{{ me.event.name }}</strong>
+      {% for team in me.teams.all %}
+        {% if team.members.count < 6 %}
+          <input type="checkbox" name="teams" value="{{ team.id }}">
+          {{ team.name }} ({{ team.members.count }}/6)
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+
+  <button type="submit">Register</button>
+</form>

@@ -15,42 +15,27 @@
 
         <ul class="list">
             {% for event in events %}
-
-                {% if event.gender_boys %}
                 <li class="list-item">
                     <label>
-                        <input type="checkbox"
+                        <input
+                            type="checkbox"
                             name="events"
                             value="{{ event.id }}"
-                            {% if event.id in assigned_event_ids %}checked{% endif %}>
-                        👦 {{ event.name }}
+                            {% if event.id in assigned_event_ids %}checked{% endif %}
+                        >
+                        {{ event.name }}
                         <small style="opacity:0.7;">
-                            ({{ event.event_type }} | Boys)
+                            ({{ event.event_type|title }}
+                            {% if event.event_type == "TEAM" %}
+                                | Max {{ event.max_team_size }}
+                            {% endif %})
                         </small>
                     </label>
                 </li>
-                {% endif %}
-
-                {% if event.gender_girls %}
-                <li class="list-item">
-                    <label>
-                        <input type="checkbox"
-                            name="events"
-                            value="{{ event.id }}"
-                            {% if event.id in assigned_event_ids %}checked{% endif %}>
-                        👧 {{ event.name }}
-                        <small style="opacity:0.7;">
-                            ({{ event.event_type }} | Girls)
-                        </small>
-                    </label>
-                </li>
-                {% endif %}
-
             {% empty %}
                 <li class="list-item">No active events available</li>
             {% endfor %}
-            </ul>
-
+        </ul>
 
         <div style="margin-top:1rem;">
             <button type="submit" class="btn-action">
