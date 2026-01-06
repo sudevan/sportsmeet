@@ -1,6 +1,6 @@
+from django.db import models
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
-from django.db import models
 
 
 class UserRole(models.TextChoices):
@@ -8,113 +8,69 @@ class UserRole(models.TextChoices):
     FACULTY_COORDINATOR = "FACULTY_COORDINATOR", "Faculty Coordinator"
     STUDENT_COORDINATOR = "STUDENT_COORDINATOR", "Student Coordinator"
     FACULTY = "FACULTY", "Faculty"
-    STUDENT = "STUDENT", "Student"
 
-
-class UserManager(BaseUserManager):
-    use_in_migrations = True
-
-    def _create_user(self, email, password, **extra_fields):
-        if not email:
-            raise ValueError("The Email must be set")
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        if password:
-            user.set_password(password)
-        else:
-            user.set_unusable_password()
-        user.save(using=self._db)
-        return user
-
-    def create_user(self, email, password=None, **extra_fields):
-        extra_fields.setdefault("is_superuser", False)
-        extra_fields.setdefault("is_active", True)
-        role = extra_fields.get("role", UserRole.STUDENT)
-        extra_fields.setdefault("is_staff", role != UserRole.STUDENT)
-        return self._create_user(email, password, **extra_fields)
-
-    def create_superuser(self, email, password, **extra_fields):
-        extra_fields.setdefault("role", UserRole.ADMIN)
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("is_active", True)
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True.")
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True.")
-        return self._create_user(email, password, **extra_fields)
-
-
-class Department(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    faculty_coordinator = models.OneToOneField(
-        "accounts.User",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="faculty_coordinator_department",
-    )
-    student_coordinator = models.OneToOneField(
-        "accounts.User",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="student_coordinator_department",
-    )
-
-    def __str__(self):
-        return self.name
-
-    @property
-    def student_count(self):
-        return self.users.filter(
-            role__in=[UserRole.STUDENT, UserRole.STUDENT_COORDINATOR]
-        ).count()
-    
-    
 
 class Gender(models.TextChoices):
     MALE = "MALE", "Male"
     FEMALE = "FEMALE", "Female"
 
 
+
+class Department(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+
+# -------------------------
+# STAFF USER (LOGIN USERS)
+# -------------------------
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Email required")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save()
+        return user
+
+    def create_superuser(self, email, password, **extra_fields):
+        extra_fields.setdefault("role", UserRole.ADMIN)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        return self.create_user(email, password, **extra_fields)
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    full_name = models.CharField(max_length=255, blank=True)
-    register_number = models.CharField(
-        max_length=50,
-        unique=True,
-        null=True,
-        blank=True
-    )
-    role = models.CharField(max_length=32, choices=UserRole.choices, default=UserRole.STUDENT)
-    gender = models.CharField(
-        max_length=32,
-        choices=Gender.choices,
-        null=True,
-        blank=True
-    )
+    role = models.CharField(max_length=32, choices=UserRole.choices)
     department = models.ForeignKey(
-        Department,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="users",
+        Department, null=True, blank=True, on_delete=models.SET_NULL
     )
-    semester = models.CharField(max_length=20, blank=True, null=True)
 
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=True)
 
     objects = UserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
-
-    def save(self, *args, **kwargs):
-        if not self.is_superuser:
-            self.is_staff = self.role != UserRole.STUDENT
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.email
+
+
+# -------------------------
+# STUDENT (NO LOGIN)
+# -------------------------
+class Student(models.Model):
+    full_name = models.CharField(max_length=255)
+    register_number = models.CharField(max_length=50, unique=True)
+    gender = models.CharField(max_length=10, choices=Gender.choices)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    semester = models.CharField(max_length=20)
+
+    def __str__(self):
+        return f"{self.full_name} ({self.register_number})"

@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from accounts.models import User
+from accounts.models import Department, Student
 
 
 class MeetStatus(models.TextChoices):
@@ -35,34 +35,23 @@ class Meet(models.Model):
         default=MeetStatus.DRAFT
     )
 
-    @property
-    def events(self):
-        return Event.objects.filter(
-            meetevent__meet=self,
-            meetevent__is_active=True
-        )
-
     def __str__(self):
         return self.name
 
 
 class Event(models.Model):
     name = models.CharField(max_length=255)
-
     category = models.CharField(
         max_length=20,
         choices=EventCategory.choices,
         default=EventCategory.OTHER
     )
-
     event_type = models.CharField(
         max_length=20,
         choices=EventType.choices,
         default=EventType.INDIVIDUAL
     )
-
     max_team_size = models.PositiveIntegerField(null=True, blank=True)
-
     status = models.CharField(
         max_length=16,
         choices=EventStatus.choices,
@@ -72,22 +61,15 @@ class Event(models.Model):
     def clean(self):
         if self.event_type == EventType.INDIVIDUAL:
             self.max_team_size = None
-
-        if self.event_type == EventType.TEAM:
-            if not self.max_team_size:
-                raise ValidationError("Maximum team size is required")
+        if self.event_type == EventType.TEAM and not self.max_team_size:
+            raise ValidationError("Maximum team size is required")
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-        
+
     def __str__(self):
         return self.name
-
-
-
-
-
 
 
 class MeetEvent(models.Model):
@@ -104,84 +86,55 @@ class MeetEvent(models.Model):
 
 class Team(models.Model):
     meet_event = models.ForeignKey(
-        MeetEvent,
-        on_delete=models.CASCADE,
-        related_name="teams"
+        MeetEvent, on_delete=models.CASCADE, related_name="teams"
     )
-    name = models.CharField(max_length=255)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ("meet_event", "name")
-
-    def clean(self):
-        event = self.meet_event.event
-
-        if event.event_type != EventType.TEAM:
-            raise ValidationError("Teams allowed only for TEAM events")
-
-        member_count = TeamMember.objects.filter(team=self).count()
-
-        if event.max_team_size and member_count >= event.max_team_size:
-            raise ValidationError(
-                f"Maximum {event.max_team_size} players allowed"
-            )
-
-
+        unique_together = ("meet_event", "department")
 
     def __str__(self):
-        return self.name
+        return f"{self.meet_event.event.name} - {self.department.name}"
 
 
 class TeamMember(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    student = models.ForeignKey(User, on_delete=models.CASCADE)
-    is_captain = models.BooleanField(default=False)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ("team", "student")
 
     def clean(self):
-        if self.is_captain:
-            if TeamMember.objects.filter(
-                team=self.team,
-                is_captain=True
-            ).exclude(id=self.id).exists():
-                raise ValidationError("Only one captain allowed")
-            
+        event = self.team.meet_event.event
+
+        if self.student.department != self.team.department:
+            raise ValidationError("Student must belong to same department")
+
+        if event.max_team_size:
+            if TeamMember.objects.filter(team=self.team).exclude(id=self.id).count() >= event.max_team_size:
+                raise ValidationError("Team is full")
+
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
 
 
-
 class Registration(models.Model):
     meet_event = models.ForeignKey(
-        MeetEvent,
-        on_delete=models.CASCADE,
-        related_name="registrations"
+        MeetEvent, on_delete=models.CASCADE, related_name="registrations"
     )
-    participant = models.ForeignKey(User, on_delete=models.CASCADE)
+    participant = models.ForeignKey(Student, on_delete=models.CASCADE)
     position = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         unique_together = ("meet_event", "participant")
 
     def clean(self):
-        event = self.meet_event.event
-        student = self.participant
+        if self.meet_event.event.event_type == EventType.TEAM:
+            raise ValidationError("Direct registration not allowed for team events")
 
         if self.meet_event.meet.status != MeetStatus.ACTIVE:
             raise ValidationError("Meet is not active")
-
-        if event.status != EventStatus.ACTIVE:
-            raise ValidationError("Event is not active")
-
-        # Gender-based separation happens here (same as before)
-        if student.gender not in ("MALE", "FEMALE"):
-            raise ValidationError("Invalid student gender")
-
 
     def save(self, *args, **kwargs):
         self.full_clean()

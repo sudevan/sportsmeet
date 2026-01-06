@@ -20,28 +20,34 @@ All students in your department
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Department</th>
-                        <th>Register Number</th>
-                        <th>Email</th>
+                      <th>Event</th>
+                      <th>Meet</th>
+                      <th>Type</th>
+                      <th>Action</th>
                     </tr>
-                </thead>
-                <tbody>
-                    {% for student in students %}
+                  </thead>
+                  <tbody>
+                    {% for me in meet_events %}
                     <tr>
-                        <td>{{ student.full_name }}</td>
-                        <td>{{ student.department }}</td>
-                        <td>{{ student.register_number }}</td>
-                        <td>{{ student.email }}</td>
+                      <td>{{ me.event.name }}</td>
+                      <td>{{ me.meet.name }}</td>
+                      <td>{{ me.event.event_type }}</td>
+                      <td>
+                        <a href="{% url 'accounts:event_students' me.id %}"
+                           class="btn-action">
+                          👥 View Students
+                        </a>
+                      </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" style="text-align:center; color:var(--text-secondary);">
-                            No students found
-                        </td>
+                      <td colspan="4" style="text-align:center;">
+                        No active events
+                      </td>
                     </tr>
                     {% endfor %}
-                </tbody>
+                  </tbody>
+                  
             </table>
         </div>
 

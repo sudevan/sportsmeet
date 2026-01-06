@@ -1,0 +1,57 @@
+{% extends 'accounts/dashboards/base_dashboard.html' %}
+
+{% block page_title %}
+👥 {{ meet_event.event.name }} – Registered Students
+{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-grid">
+
+  <div class="glass-card">
+    <h3>👦 Boys</h3>
+    <table class="table">
+      <tr>
+        <th>Name</th>
+        <th>Register No</th>
+        <th>Department</th>
+      </tr>
+      {% for s in boys %}
+      <tr>
+        <td>{{ s.full_name }}</td>
+        <td>{{ s.register_number }}</td>
+        <td>{{ s.department }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No boys registered</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="glass-card">
+    <h3>👧 Girls</h3>
+    <table class="table">
+      <tr>
+        <th>Name</th>
+        <th>Register No</th>
+        <th>Department</th>
+      </tr>
+      {% for s in girls %}
+      <tr>
+        <td>{{ s.full_name }}</td>
+        <td>{{ s.register_number }}</td>
+        <td>{{ s.department }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3">No girls registered</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+</div>
+
+<a href="{% url 'accounts:student_list' %}" class="btn-action btn-outline">
+⬅ Back to Events
+</a>
+
+{% endblock %}

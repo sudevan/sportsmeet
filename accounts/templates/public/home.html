@@ -39,20 +39,19 @@
   {% endfor %}
 
   <h3>Team Events (Max 2)</h3>
-  {% for me in meet_events %}
-    {% if me.event.event_type == "TEAM" %}
-      <strong>{{ me.event.name }}</strong><br>
-      {% for team in me.teams.all %}
-        {% if team.teammember_set.count < me.event.max_team_size %}
-          <label>
-            <input type="checkbox" name="teams" value="{{ team.id }}">
-            {{ team.name }} ({{ team.teammember_set.count }}/{{ me.event.max_team_size }})
-          </label><br>
-        {% endif %}
-      {% endfor %}
-      <br>
-    {% endif %}
-  {% endfor %}
+
+{% for me in meet_events %}
+  {% if me.event.event_type == "TEAM" %}
+    <label>
+      <input type="checkbox" name="team_events" value="{{ me.id }}">
+      {{ me.event.name }}
+      <!-- <small>
+        ({{ me.event.max_team_size }} per department)
+      </small> -->
+    </label><br>
+  {% endif %}
+{% endfor %}
+
 
   <button type="submit">Register</button>
 </form>
